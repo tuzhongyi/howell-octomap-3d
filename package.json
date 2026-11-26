@@ -1,7 +1,7 @@
 {
   "name": "howell-octomap-3d",
   "version": "0.0.1",
-  "description": "OctoMap 三维寻路组件（Three.js 点云），Angular 组件库",
+  "description": "Octomap 三维寻路组件（Three.js 点云），Angular 组件库",
   "sideEffects": false,
   "peerDependencies": {
     "@angular/core": "^21.0.0",

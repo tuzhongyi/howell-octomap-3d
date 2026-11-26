@@ -1,6 +1,6 @@
 # howell-octomap-3d
 
-OctoMap 三维寻路组件（基于 Three.js 点云），作为 Angular 组件库供其他项目引用。
+Octomap 三维寻路组件（基于 Three.js 点云），作为 Angular 组件库供其他项目引用。
 
 ## 安装
 
@@ -19,7 +19,7 @@ peerDependencies 需要宿主自己安装：
 ## 使用
 
 ```ts
-import { Octomap3dPcdComponent, OctoMapPointCloud } from 'howell-octomap-3d';
+import { Octomap3dPcdComponent, OctomapPointCloud } from 'howell-octomap-3d';
 ```
 
 组件选择器：`howell-octomap-3d-pcd`。点云通过 `points` 输入传入，状态变化通过 `@Output()` 上报。

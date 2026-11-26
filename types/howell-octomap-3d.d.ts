@@ -5,7 +5,7 @@ import { AfterViewInit, OnChanges, OnDestroy, EventEmitter, SimpleChanges } from
  * PCD 解析器与 Octomap3dPcdComponent 之间共享的数据契约。
  */
 /** 由 {@link Octomap3dPcdComponent} 渲染的三维点云。 */
-interface OctoMapPointCloud {
+interface OctomapPointCloud {
     /** 交错的 XYZ 坐标，长度 = pointCount * 3。 */
     positions: Float32Array;
     /** 可选的交错 RGB 颜色（0..1），长度 = pointCount * 3。 */
@@ -16,7 +16,7 @@ interface OctoMapPointCloud {
     pointCount: number;
 }
 /** 当前点云的轴对齐包围盒，单位：世界单位。 */
-interface OctoMapBoundingBox {
+interface OctomapBoundingBox {
     min: [number, number, number];
     max: [number, number, number];
     center: [number, number, number];
@@ -24,16 +24,16 @@ interface OctoMapBoundingBox {
     radius: number;
 }
 /** (mapReady) 发出的负载。 */
-interface OctoMapReadyDetail {
+interface OctomapReadyDetail {
     width: number;
     height: number;
     pointCount: number;
-    boundingBox: OctoMapBoundingBox | null;
+    boundingBox: OctomapBoundingBox | null;
 }
 /** (pointsChanged) 发出的负载。 */
-interface OctoMapPointsChangedDetail {
+interface OctomapPointsChangedDetail {
     pointCount: number;
-    boundingBox: OctoMapBoundingBox | null;
+    boundingBox: OctomapBoundingBox | null;
     /**
      * 参考物（灰色地面平面 + 参考网格）所在的世界 Y；没有点云时为 null。
      *
@@ -62,7 +62,7 @@ interface OctoMapPointsChangedDetail {
  * 是**增量**不是位置：宿主自己累加进它的偏移量里。拖动期间云已经在画面上跟着走
  * 了，宿主拿到这个值只负责把数据改对，不必再做一次视觉位移。
  */
-interface OctoMapCloudTranslation {
+interface OctomapCloudTranslation {
     x: number;
     y: number;
     z: number;
@@ -71,17 +71,17 @@ interface OctoMapCloudTranslation {
  * 旋转手柄报出来的**总**旋转：欧拉角，单位度，`'XYZ'` 顺序（与 three.js 的
  * `Euler(..., 'XYZ')` 一致），各分量落在（-180, 180]。
  *
- * 与 {@link OctoMapCloudTranslation} 相反，它是**绝对值**不是增量：手柄转的是一次
+ * 与 {@link OctomapCloudTranslation} 相反，它是**绝对值**不是增量：手柄转的是一次
  * 整体朝向，「当前转了多少」才是宿主需要记下来的东西（增量得做四元数合成，宿主那边
  * 没有这套数学）。拖动过程中的实时值同样按这个口径报，宿主直接显示即可。
  */
-interface OctoMapCloudRotation {
+interface OctomapCloudRotation {
     x: number;
     y: number;
     z: number;
 }
 /** 手柄的摆放：抓在世界的哪个点、以什么朝向为起点。 */
-interface OctoMapGizmoPose {
+interface OctomapGizmoPose {
     /**
      * 手柄抓的世界坐标，也是**旋转的支点**。
      *
@@ -103,14 +103,14 @@ interface OctoMapGizmoPose {
  * 一个手柄同一时刻只能是一种模式（`TransformControls` 的限制），所以这里是单选而不是
  * 两个开关：两个都想要时由宿主决定谁优先。
  */
-type OctoMapGizmoMode = 'off' | 'translate' | 'rotate';
+type OctomapGizmoMode = 'off' | 'translate' | 'rotate';
 /**
  * 圈出「当前选中的那一份」的轴对齐包围盒（世界坐标）。
  *
  * 场景里拼了多份点云时才有意义：手柄只作用于其中一份，而关掉手柄之后就没有任何
  * 东西提示选的是哪份了，这圈线负责补上。地图不知道「哪份云」，只画一个盒子。
  */
-interface OctoMapSelectionBox {
+interface OctomapSelectionBox {
     min: [number, number, number];
     max: [number, number, number];
 }
@@ -125,7 +125,7 @@ interface OctoMapSelectionBox {
  * 增量由宿主的 `relativeAdjustmentTransform` 从「拖之前」与「拖之后」两份整体变换
  * 算出来——地图不知道旋转角、偏移量这些概念，只知道「这一批实例刚体挪一下」。
  */
-interface OctoMapCloudPreview {
+interface OctomapCloudPreview {
     /** 选中那份在合并点云里的起始点号。 */
     start: number;
     /** 它有多少个点。 */
@@ -136,10 +136,10 @@ interface OctoMapCloudPreview {
     /**
      * 点云模式的兜底：那边没有实例矩阵可挪，只能重画一份世界。体素模式传 null。
      */
-    points: OctoMapPointCloud | null;
+    points: OctomapPointCloud | null;
 }
 /** (pointClicked) 发出的负载。 */
-interface OctoMapPointClickedDetail {
+interface OctomapPointClickedDetail {
     /** 射线拾取到的点索引，未命中时为 -1。 */
     index: number;
     /** 射线拾取到的点的世界坐标，未命中时为 null。 */
@@ -151,7 +151,7 @@ interface OctoMapPointClickedDetail {
  * 点云模式下是那个点自己的坐标；立体格栅模式下是体素中心——格栅画出来的每一个
  * 方块就是一个体素，鼠标指着的其实是整格，报格心才和删除/移动用的是同一个位置。
  */
-interface OctoMapHoverInfo {
+interface OctomapHoverInfo {
     /** 世界坐标。 */
     position: [number, number, number];
     /** 相对扫描出的地板高度（见 `Octomap3dPcdGrille.groundLevel`）。 */
@@ -163,13 +163,13 @@ interface OctoMapHoverInfo {
  * 已刷（禁行）障碍体素的集合，可序列化，因而能持久化并在网格重建后重新应用。
  * `voxelSize` + `min` 标识这些键所属的网格。
  */
-interface OctoMapPaintedVoxels {
+interface OctomapPaintedVoxels {
     voxelSize: number;
     min: [number, number, number];
     keys: string[];
 }
 /** 点云的绘制方式：原始点或实体体素网格。 */
-type OctoMapRenderMode = 'points' | 'voxel';
+type OctomapRenderMode = 'points' | 'voxel';
 /**
  * 一次俯视投影的全部输入（`(projectionSource)` 的负载，也是
  * {@link Octomap3dPcdComponent.projectionSource} 的答复类型）。
@@ -179,11 +179,11 @@ type OctoMapRenderMode = 'points' | 'voxel';
  * （`common/utils/projection.util.ts` 的纯函数）。原先它和那些纯函数住在一起，
  * 于是地图反过来依赖 `common/utils`——把类型放回这里，`octomap-3d-pcd/` 才能整目录搬走。
  */
-interface OctoMapProjectionSource {
+interface OctomapProjectionSource {
     /** 交错的 XYZ 坐标。 */
     positions: Float32Array;
     /** 投影网格对齐到它的 min[0] / min[2]，尺寸也由它推出。 */
-    bounds: OctoMapBoundingBox;
+    bounds: OctomapBoundingBox;
     /** 分辨率（世界单位），即一格多宽。 */
     resolution: number;
 }
@@ -198,7 +198,7 @@ interface OctoMapProjectionSource {
  * - `voxelSize`：**实际**用的体素边长（米），笔刷半径 ÷ 它就是判定的尺度。自动模式
  *   （输入为 null）下这两个数只有网格自己知道，所以由组件从这里报出来。
  */
-interface OctoMapBrushMissDetail {
+interface OctomapBrushMissDetail {
     radius: number;
     voxelSize: number;
 }
@@ -211,7 +211,7 @@ interface OctoMapBrushMissDetail {
  *
  * `'surfaceGraph'`：每一列保留它全部的真实竖直占用段；**一个点都没有的列**补一个
  * 常数高度（`groundLevel`）的虚拟地面 run。跨台阶、上桌面靠这一套，
- * {@link OctoMapMapSettings.groundExtendsOutside} 的「封边」那半边也靠它工作——那一项
+ * {@link OctomapMapSettings.groundExtendsOutside} 的「封边」那半边也靠它工作——那一项
  * 管的是**开关**，与视觉地面的大小（`groundExtendX` / `groundExtendZ`）是两件事，
  * 详见它的字段说明。
  *
@@ -229,7 +229,7 @@ interface OctoMapBrushMissDetail {
  * （真图上是空列的 13.7%，R = 2），所以它补的是扫描的缺口，**不是**把整张地板重建出
  * 来。远离任何点的地方仍旧退回常数地面，`groundExtendsOutside` 的语义因此保留。
  */
-type OctoMapPathAlgorithm = 'surfaceGraph' | 'cloudFit';
+type OctomapPathAlgorithm = 'surfaceGraph' | 'cloudFit';
 /**
  * 寻路失败的原因。
  *
@@ -262,9 +262,9 @@ type OctoMapPathAlgorithm = 'surfaceGraph' | 'cloudFit';
  * 处置是**挪终点或者先搭出能站的面**，拖「跨越高度」滑杆救不回来——半空里没有面
  * 可以迈。
  */
-type OctoMapPathFailureReason = 'unreachable' | 'outOfRange' | 'tooLarge' | 'gap' | 'dogStuck' | 'goalTooHigh';
+type OctomapPathFailureReason = 'unreachable' | 'outOfRange' | 'tooLarge' | 'gap' | 'dogStuck' | 'goalTooHigh';
 /** 寻路失败时 `(pathFailed)` 发出的负载。 */
-interface OctoMapPathFailedDetail {
+interface OctomapPathFailedDetail {
     /**
      * `unreachable` = 搜不到；`outOfRange` = 搜到了但末端落在终点范围之外；
      * `tooLarge` = 压根没搜——场景太大，规划网格超过上限（见 `MAX_FREE_CELLS`）；
@@ -278,7 +278,7 @@ interface OctoMapPathFailedDetail {
      * 参数、要么挪终点，而这个是场景本身超出了能规划的范围，用户既改不动也挪不动，
      * 只能知道「框在哪儿」——所以它对应的提示会指向「显示规划范围」那个开关。
      */
-    reason: OctoMapPathFailureReason;
+    reason: OctomapPathFailureReason;
     /**
      * 路径末端到终点的距离（世界单位）；只有 `outOfRange` 时有值，其余为 null。
      *
@@ -311,15 +311,15 @@ interface OctoMapPathFailedDetail {
     heightGap: number | null;
 }
 /** 地图上鼠标交互的解读方式。 */
-type OctoMapInteractionMode = 'view' | 'brush' | 'erase' | 'placeDog' | 'placeGoal' | 'addPoint' | 'deletePoint' | 'movePoint';
+type OctomapInteractionMode = 'view' | 'brush' | 'erase' | 'placeDog' | 'placeGoal' | 'addPoint' | 'deletePoint' | 'movePoint';
 /** 小狗沿计算出的路径行进的各个状态。 */
-type OctoMapWalkState = 'idle' | 'ready' | 'walking' | 'paused';
+type OctomapWalkState = 'idle' | 'ready' | 'walking' | 'paused';
 /** 小狗在路径上的位置快照，变化时发出。 */
-interface OctoMapWalkProgress {
+interface OctomapWalkProgress {
     /** 已行进路径的比例，取值 [0, 1]。 */
     progress: number;
     /** 小狗当前相对路径处于什么状态。 */
-    state: OctoMapWalkState;
+    state: OctomapWalkState;
     /** 朝向是否已被行进锁住；锁住时初始朝向不再生效，直到重新计算路径。 */
     headingLocked: boolean;
 }
@@ -330,18 +330,18 @@ interface OctoMapWalkProgress {
  * 接着做什么」包成这个函数发下去，子组件算完调它。`EventEmitter` 的 `next()` 是
  * 同步的，因此同步命令走这条往返和直接调用没有区别。
  */
-type OctoMapReply<T> = (result: T) => void;
+type OctomapReply<T> = (result: T) => void;
 /**
  * 模型加载请求。
  *
  * `reply` 可以不给——不给就是「失败静默」，用于启动时按记住的文件名恢复模型那条
  * 路：文件不在就安静地退回内置几何体，不打扰用户。
  */
-interface OctoMapDogModelRequest {
+interface OctomapDogModelRequest {
     /** blob/object URL 或静态资源路径。 */
     url: string;
     /** 收 null（成功）或可显示的失败原因。 */
-    reply?: OctoMapReply<string | null>;
+    reply?: OctomapReply<string | null>;
 }
 /**
  * {@link Octomap3dPcdComponent} 使用的可调视图参数。
@@ -356,8 +356,8 @@ interface OctoMapDogModelRequest {
  * `src/app/common/model/demo-settings.model.ts` 的 `DemoTabSettings`）。上轴与整体
  * 变换由页面在加载那一刻读一次（点云转好、挪好才交给地图），说明开关由面板与行进栏读。
  */
-interface OctoMapMapSettings {
-    renderMode: OctoMapRenderMode;
+interface OctomapMapSettings {
+    renderMode: OctomapRenderMode;
     /** 体素棱长，单位：世界单位；null = 自动推导。 */
     voxelSize: number | null;
     /** 点大小，单位：世界单位（点云模式）；null = 自动推导。 */
@@ -417,7 +417,7 @@ interface OctoMapMapSettings {
      *   上去）。所以默认值降到 **0.25 m**：细的东西留得下来；
      * - 但降默认值**治不了根**——任何半径都能吞掉更细的东西，反过来在空处刷也永远是
      *   静默无效（那儿没有点可标）。真正的兜底是「刷不到点就提示」，见
-     *   `OctoMapBrushMissDetail`。
+     *   `OctomapBrushMissDetail`。
      */
     brushRadius: number;
     /**
@@ -550,30 +550,30 @@ interface OctoMapMapSettings {
     /** 地面平面沿世界 Z 轴向包围盒外延展的宽度（单边，世界单位）。见 {@link groundExtendX}。 */
     groundExtendZ: number;
     /**
-     * 用哪种方式寻路（见 {@link OctoMapPathAlgorithm}）。
+     * 用哪种方式寻路（见 {@link OctomapPathAlgorithm}）。
      *
      * 与这个接口里别的项不同，它**不属于小狗的形状**，所以不进任何一组设置缓存
      * （分组表见 `settings-tab-cache.service.ts`）——换一种走法不改小狗的尺寸，没有
      * 理由让缓存失效。开关也因此留在行进栏，设置面板「路径」页里没有它。
      */
-    pathAlgorithm: OctoMapPathAlgorithm;
+    pathAlgorithm: OctomapPathAlgorithm;
 }
 /**
  * `assets/config/octomap.config.json` 里必须出现的键，也就是
- * {@link OctoMapMapSettings} 的全部。
+ * {@link OctomapMapSettings} 的全部。
  *
- * 类型写成 `(keyof OctoMapMapSettings)[]` 是为了抓错别字：写一个不存在的键名直接是
+ * 类型写成 `(keyof OctomapMapSettings)[]` 是为了抓错别字：写一个不存在的键名直接是
  * 编译错。另一头（漏项、以及「文件里真写了这些键没有」）编译期看不见，由
  * `config.service.spec.ts` 拿真实的 JSON 对账。
  */
-declare const MAP_CONFIG_KEYS: readonly (keyof OctoMapMapSettings)[];
+declare const MAP_CONFIG_KEYS: readonly (keyof OctomapMapSettings)[];
 /**
  * 配置文件未提供取值时使用的设置。
  *
  * 这里用 `satisfies` 而非类型标注，因此各值保留字面量类型，可读回为具体默认值
  * （例如 `voxelSize` 是 `number`，而不是 `number | null`）。
  */
-declare const DEFAULT_OCTO_MAP_SETTINGS: {
+declare const DEFAULT_OCTOMAP_SETTINGS: {
     renderMode: "voxel";
     voxelSize: number;
     pointSize: null;
@@ -622,10 +622,10 @@ declare const DEFAULT_OCTO_MAP_SETTINGS: {
 declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestroy {
     private readonly viewportRef;
     /** 要渲染的点云。传 null 清空视口。 */
-    points: OctoMapPointCloud | null;
+    points: OctomapPointCloud | null;
     /**
      * 拖动中的整体变换预览：把合并点云里的一段点当成刚体挪一下（见
-     * {@link OctoMapCloudPreview}）。非 null 时**只改画面**，其余一概不碰。
+     * {@link OctomapCloudPreview}）。非 null 时**只改画面**，其余一概不碰。
      *
      * 多份点云拼成了一份渲染对象（手柄只该动其中一份），整份对象一挪会把别的云也
      * 带走，所以这里只动选中那一份：体素模式改写它占的那些实例矩阵，点云模式重画一份
@@ -635,7 +635,7 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
      *
      * 传回 null 表示回到 {@link points}（松手、取消拖动）。
      */
-    preview: OctoMapCloudPreview | null;
+    preview: OctomapCloudPreview | null;
     /**
      * 手柄的工作方式：`'off'` 不显示，`'translate'` 拖位移，`'rotate'` 拖旋转。
      *
@@ -644,15 +644,15 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
      * 数据、换一份新的 `points` 进来，画面才落到真实的坐标上。所以这个开关必须有人
      * 接那两个输出，否则云会「拖得动、松手弹回去」。
      */
-    gizmoMode: OctoMapGizmoMode;
+    gizmoMode: OctomapGizmoMode;
     /**
      * 手柄摆在哪：位置 + 云当前的整体朝向。null 时退回到包围盒中心、朝向恒等。
      *
      * 位置由宿主给（不是地图自己算包围盒中心）：云转过之后包围盒中心会漂，而宿主
      * 记账用的支点不会——两边不一致的话每转一次松手画面就跳一下。见
-     * {@link OctoMapGizmoPose}。
+     * {@link OctomapGizmoPose}。
      */
-    gizmoPose: OctoMapGizmoPose | null;
+    gizmoPose: OctomapGizmoPose | null;
     /**
      * 圈出当前选中的那一份点云（世界包围盒）；null 表示不画。
      *
@@ -660,7 +660,7 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
      * 动的是哪份。手柄收起来时宿主会传 null（选中本身还在，只是没东西可操作），
      * 地图跟着不画。地图不知道那是什么，只管画一个盒子。
      */
-    selectionBox: OctoMapSelectionBox | null;
+    selectionBox: OctomapSelectionBox | null;
     /**
      * 拖手柄时要不要让渲染出来的云跟着动（预览）。
      *
@@ -696,7 +696,7 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
      */
     gizmoReadout: string | null;
     /** 点云的绘制方式：原始点云或立体格栅。 */
-    renderMode: OctoMapRenderMode;
+    renderMode: OctomapRenderMode;
     /** 体素边长（世界单位）。为 null 时由包围盒推导。 */
     voxelSize: number | null;
     /** 视口的背景/清屏颜色。 */
@@ -710,8 +710,8 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
     /**
      * 是否显示规划网格能覆盖的范围。场景超限时无视它，强制显示。
      *
-     * 显式标注 `boolean`：`DEFAULT_OCTO_MAP_SETTINGS` 是用 `satisfies` 收尾的，各值
-     * 都保留字面量类型，所以 `= DEFAULT_OCTO_MAP_SETTINGS.showNavLimit` 会被推成
+     * 显式标注 `boolean`：`DEFAULT_OCTOMAP_SETTINGS` 是用 `satisfies` 收尾的，各值
+     * 都保留字面量类型，所以 `= DEFAULT_OCTOMAP_SETTINGS.showNavLimit` 会被推成
      * `true`，父组件绑 `false` 就编译不过。
      */
     showNavLimit: boolean;
@@ -743,11 +743,11 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
     /** 禁行区域（已刷障碍）的颜色。 */
     forbiddenColor: string;
     /** 已持久化的已刷障碍，在（重新）构建后重新应用。 */
-    painted: OctoMapPaintedVoxels | null;
+    painted: OctomapPaintedVoxels | null;
     /** 鼠标交互在地图上的解释方式。 */
-    interactionMode: OctoMapInteractionMode;
+    interactionMode: OctomapInteractionMode;
     /**
-     * 障碍刷的半径（世界单位）。默认值与 {@link DEFAULT_OCTO_MAP_SETTINGS} 一致，不抄
+     * 障碍刷的半径（世界单位）。默认值与 {@link DEFAULT_OCTOMAP_SETTINGS} 一致，不抄
      * 字面量：首次绑定会被 `ngOnChanges` 跳过（见记忆 `ngOnChanges-skips-first-binding`），
      * 所以这里的初值必须就是那个默认值。**显式标注 `number`** 则是因为默认设置用
      * `satisfies` 收尾、各值保留字面量类型（见记忆 `default-settings-literal-type`）。
@@ -761,9 +761,9 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
     crossWidth: number;
     /**
      * 「填充基准范围」（单位：导航格），只影响「贴云点面」那一档，见
-     * {@link OctoMapMapSettings.fillBaseCells}。
+     * {@link OctomapMapSettings.fillBaseCells}。
      *
-     * 显式标注 `number` 是因为 `DEFAULT_OCTO_MAP_SETTINGS` 用 `satisfies` 收尾、各值
+     * 显式标注 `number` 是因为 `DEFAULT_OCTOMAP_SETTINGS` 用 `satisfies` 收尾、各值
      * 保留字面量类型，不标注就会被推成 `8`。
      */
     fillBaseCells: number;
@@ -795,7 +795,7 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
     /**
      * 地面平面沿 X 轴向包围盒外延展的长度（单边，世界单位）。
      *
-     * 显式标注 `: number`：`DEFAULT_OCTO_MAP_SETTINGS` 用 `satisfies` 收尾、各值保留
+     * 显式标注 `: number`：`DEFAULT_OCTOMAP_SETTINGS` 用 `satisfies` 收尾、各值保留
      * 字面量类型，抄初值会被推成 `0.9`，父组件传别的数就编译不过（与
      * {@link pathAlgorithm} 同一个坑，见 [[default-settings-literal-type]]）。
      */
@@ -803,13 +803,13 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
     /** 地面平面沿 Z 轴向包围盒外延展的宽度（单边，世界单位）。 */
     groundExtendZ: number;
     /**
-     * 用哪种方式寻路，见 {@link OctoMapPathAlgorithm}。
+     * 用哪种方式寻路，见 {@link OctomapPathAlgorithm}。
      *
-     * 显式标注 `OctoMapPathAlgorithm`：`DEFAULT_OCTO_MAP_SETTINGS` 用 `satisfies` 收尾，
+     * 显式标注 `OctomapPathAlgorithm`：`DEFAULT_OCTOMAP_SETTINGS` 用 `satisfies` 收尾，
      * 各值保留字面量类型，抄初值会被推成 `'surfaceGraph'`，父组件换一种就编译不过
      * （与 {@link showNavLimit} 同一个坑，见 [[default-settings-literal-type]]）。
      */
-    pathAlgorithm: OctoMapPathAlgorithm;
+    pathAlgorithm: OctomapPathAlgorithm;
     /** 点击时射线拾取的点数上限（点云模式的安全保护）。 */
     maxPickingPoints: number;
     /** 从小狗到终点运行 A* 并绘制路径（不行走）。 */
@@ -834,29 +834,29 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
      * 用外部模型文件替换小狗的内置几何体。`url` 可以是 blob/object URL 或静态
      * 资源路径。不传 `reply` 时失败静默。
      */
-    loadDogModel: EventEmitter<OctoMapDogModelRequest>;
+    loadDogModel: EventEmitter<OctomapDogModelRequest>;
     /** 取回用于导出的编辑后点云（每体素一个点，或原始点）。 */
-    exportPointCloud: EventEmitter<OctoMapReply<OctoMapPointCloud | null>>;
+    exportPointCloud: EventEmitter<OctomapReply<OctomapPointCloud | null>>;
     /** 取回重采样到体素点阵上的点云（非体素模式为 null）。 */
-    regularizeCloud: EventEmitter<OctoMapReply<OctoMapPointCloud | null>>;
+    regularizeCloud: EventEmitter<OctomapReply<OctomapPointCloud | null>>;
     /**
      * 取回当前俯视投影的全部输入（点位置、对齐包围盒、分辨率）。
      *
      * 给的是**输入**而不是算好的图：算图的那一步在 `projection.util.ts` 的纯函数里，
      * 调用方（投影弹窗）自己决定要占用图还是高度图。没有可投影的云点时回填 null。
      */
-    projectionSource: EventEmitter<OctoMapReply<OctoMapProjectionSource | null>>;
+    projectionSource: EventEmitter<OctomapReply<OctomapProjectionSource | null>>;
     /** WebGL 场景和控制器创建完成后发出一次。 */
-    readonly mapReady: EventEmitter<OctoMapReadyDetail>;
+    readonly mapReady: EventEmitter<OctomapReadyDetail>;
     /** 渲染的点云变化时发出。 */
-    readonly pointsChanged: EventEmitter<OctoMapPointsChangedDetail>;
+    readonly pointsChanged: EventEmitter<OctomapPointsChangedDetail>;
     /**
      * 用户拖动平移手柄松手时发出：整片云这一下挪了多少（增量，世界坐标）。
      *
      * 只有拖动**结束时**发一次——过程中地图自己做了视觉预览，没必要让宿主每帧
      * 重建上百万个点。
      */
-    readonly cloudTranslated: EventEmitter<OctoMapCloudTranslation>;
+    readonly cloudTranslated: EventEmitter<OctomapCloudTranslation>;
     /**
      * 拖动平移手柄**过程中**发出：从按下那一刻算起挪了多少（相对量，世界坐标）。
      *
@@ -864,48 +864,48 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
      * 一律走 {@link cloudTranslated}。一次拖动会发很多次（跟着指针走），接的人自己
      * 掂量要不要每帧都画。
      */
-    readonly cloudTranslating: EventEmitter<OctoMapCloudTranslation>;
+    readonly cloudTranslating: EventEmitter<OctomapCloudTranslation>;
     /**
      * 用户拖动旋转手柄松手时发出：云现在的整体朝向（**绝对值**，度，`'XYZ'`）。
      *
      * 与 {@link cloudTranslated} 相反，它不是增量：手柄拖出来的就是「转到哪儿」，
      * 宿主直接写进设置即可（增量要做四元数合成，那是地图这边的事）。
      */
-    readonly cloudRotated: EventEmitter<OctoMapCloudRotation>;
+    readonly cloudRotated: EventEmitter<OctomapCloudRotation>;
     /**
      * 拖动旋转手柄**过程中**发出：叠加之后的总朝向（绝对值，度，`'XYZ'`）。
      *
      * 口径同 {@link cloudTranslating}：只给读数用，落账一律走 {@link cloudRotated}。
      */
-    readonly cloudRotating: EventEmitter<OctoMapCloudRotation>;
+    readonly cloudRotating: EventEmitter<OctomapCloudRotation>;
     /** 用户点击点/体素（射线拾取）时发出。 */
-    readonly pointClicked: EventEmitter<OctoMapPointClickedDetail>;
+    readonly pointClicked: EventEmitter<OctomapPointClickedDetail>;
     /** 导航路径变化时发出（点数，清空时为 null）。 */
     readonly pathChanged: EventEmitter<number | null>;
     /**
      * 寻路失败时发出，带上原因。比 `pathChanged` 的 0 更具体——父组件据此能区分
      * 「搜不到路」和「搜到了但没走到用户点的位置」。
      */
-    readonly pathFailed: EventEmitter<OctoMapPathFailedDetail>;
+    readonly pathFailed: EventEmitter<OctomapPathFailedDetail>;
     /** 小狗在路径上的位置（及其状态）变化时发出。 */
-    readonly walkProgress: EventEmitter<OctoMapWalkProgress>;
+    readonly walkProgress: EventEmitter<OctomapWalkProgress>;
     /** 小狗被放置（或移动）到地面时发出。 */
     readonly dogPlaced: EventEmitter<void>;
     /** 终点被放置（或移动）到地面时发出。 */
     readonly goalPlaced: EventEmitter<void>;
     /** 已刷（禁行）障碍集合变化时发出。 */
-    readonly paintedChanged: EventEmitter<OctoMapPaintedVoxels>;
+    readonly paintedChanged: EventEmitter<OctomapPaintedVoxels>;
     /**
      * 刷障碍时这一笔**没刷到任何点**时发出：笔刷在拖拽中扫出了点云（或当前是「点云」
      * 显示模式，压根没有体素可刷）。判据与其余三个前置条件见 `reportBrushMiss`。
      *
      * 一次按下到抬起之间**最多一次**（见 `brushMissed`）；「空处按下」不发——那是要转
      * 相机；擦除不发——在没有障碍的地方擦是常事。父组件拿它给用户一句话
-     * （见 `OctoMapBrushMissDetail`）。
+     * （见 `OctomapBrushMissDetail`）。
      */
-    readonly brushMiss: EventEmitter<OctoMapBrushMissDetail>;
+    readonly brushMiss: EventEmitter<OctomapBrushMissDetail>;
     /** 用户右键退出编辑器模式（回到视图模式）时发出。 */
-    readonly interactionModeChange: EventEmitter<OctoMapInteractionMode>;
+    readonly interactionModeChange: EventEmitter<OctomapInteractionMode>;
     /** 发生渲染/几何错误时发出。 */
     readonly error: EventEmitter<Error>;
     /**
@@ -914,7 +914,7 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
      * 用信号而不是普通字段：探测发生在 requestAnimationFrame 里，信号能自己把 OnPush
      * 的这一帧标脏，不必再去碰变更检测。
      */
-    protected readonly hover: i0.WritableSignal<OctoMapHoverInfo | null>;
+    protected readonly hover: i0.WritableSignal<OctomapHoverInfo | null>;
     private readonly controller;
     private readonly subscriptions;
     /** 已排队的悬停探测帧；0 = 没有排队。 */
@@ -1037,6 +1037,6 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
     static ɵcmp: i0.ɵɵComponentDeclaration<Octomap3dPcdComponent, "howell-octomap-3d-pcd", never, { "points": { "alias": "points"; "required": false; }; "preview": { "alias": "preview"; "required": false; }; "gizmoMode": { "alias": "gizmoMode"; "required": false; }; "gizmoPose": { "alias": "gizmoPose"; "required": false; }; "selectionBox": { "alias": "selectionBox"; "required": false; }; "gizmoPreview": { "alias": "gizmoPreview"; "required": false; }; "fitOnPointsChange": { "alias": "fitOnPointsChange"; "required": false; }; "refitReferenceOnPointsChange": { "alias": "refitReferenceOnPointsChange"; "required": false; }; "gizmoReadout": { "alias": "gizmoReadout"; "required": false; }; "renderMode": { "alias": "renderMode"; "required": false; }; "voxelSize": { "alias": "voxelSize"; "required": false; }; "backgroundColor": { "alias": "backgroundColor"; "required": false; }; "pointColor": { "alias": "pointColor"; "required": false; }; "pointSize": { "alias": "pointSize"; "required": false; }; "showGrid": { "alias": "showGrid"; "required": false; }; "showNavLimit": { "alias": "showNavLimit"; "required": false; }; "showPath": { "alias": "showPath"; "required": false; }; "showPathPoints": { "alias": "showPathPoints"; "required": false; }; "gridSize": { "alias": "gridSize"; "required": false; }; "gridDivisions": { "alias": "gridDivisions"; "required": false; }; "fitView": { "alias": "fitView"; "required": false; }; "autoRotate": { "alias": "autoRotate"; "required": false; }; "showColoring": { "alias": "showColoring"; "required": false; }; "forbiddenColor": { "alias": "forbiddenColor"; "required": false; }; "painted": { "alias": "painted"; "required": false; }; "interactionMode": { "alias": "interactionMode"; "required": false; }; "brushRadius": { "alias": "brushRadius"; "required": false; }; "maxStepHeight": { "alias": "maxStepHeight"; "required": false; }; "crossWidth": { "alias": "crossWidth"; "required": false; }; "fillBaseCells": { "alias": "fillBaseCells"; "required": false; }; "goalRadius": { "alias": "goalRadius"; "required": false; }; "dogRadius": { "alias": "dogRadius"; "required": false; }; "dogHeight": { "alias": "dogHeight"; "required": false; }; "showDogCollision": { "alias": "showDogCollision"; "required": false; }; "dogScale": { "alias": "dogScale"; "required": false; }; "dogFitCollision": { "alias": "dogFitCollision"; "required": false; }; "dogModelHeading": { "alias": "dogModelHeading"; "required": false; }; "dogHeading": { "alias": "dogHeading"; "required": false; }; "maxHeight": { "alias": "maxHeight"; "required": false; }; "minHeight": { "alias": "minHeight"; "required": false; }; "groundExtendsOutside": { "alias": "groundExtendsOutside"; "required": false; }; "groundExtendX": { "alias": "groundExtendX"; "required": false; }; "groundExtendZ": { "alias": "groundExtendZ"; "required": false; }; "pathAlgorithm": { "alias": "pathAlgorithm"; "required": false; }; "maxPickingPoints": { "alias": "maxPickingPoints"; "required": false; }; "findPath": { "alias": "findPath"; "required": false; }; "startWalk": { "alias": "startWalk"; "required": false; }; "seekWalk": { "alias": "seekWalk"; "required": false; }; "pauseWalk": { "alias": "pauseWalk"; "required": false; }; "resumeWalk": { "alias": "resumeWalk"; "required": false; }; "clearDeployment": { "alias": "clearDeployment"; "required": false; }; "markAllObstacles": { "alias": "markAllObstacles"; "required": false; }; "clearObstacles": { "alias": "clearObstacles"; "required": false; }; "clearDogModel": { "alias": "clearDogModel"; "required": false; }; "loadDogModel": { "alias": "loadDogModel"; "required": false; }; "exportPointCloud": { "alias": "exportPointCloud"; "required": false; }; "regularizeCloud": { "alias": "regularizeCloud"; "required": false; }; "projectionSource": { "alias": "projectionSource"; "required": false; }; }, { "mapReady": "mapReady"; "pointsChanged": "pointsChanged"; "cloudTranslated": "cloudTranslated"; "cloudTranslating": "cloudTranslating"; "cloudRotated": "cloudRotated"; "cloudRotating": "cloudRotating"; "pointClicked": "pointClicked"; "pathChanged": "pathChanged"; "pathFailed": "pathFailed"; "walkProgress": "walkProgress"; "dogPlaced": "dogPlaced"; "goalPlaced": "goalPlaced"; "paintedChanged": "paintedChanged"; "brushMiss": "brushMiss"; "interactionModeChange": "interactionModeChange"; "error": "error"; }, never, never, true, never>;
 }
 
-export { DEFAULT_OCTO_MAP_SETTINGS, MAP_CONFIG_KEYS, Octomap3dPcdComponent };
-export type { OctoMapBoundingBox, OctoMapBrushMissDetail, OctoMapCloudPreview, OctoMapCloudRotation, OctoMapCloudTranslation, OctoMapDogModelRequest, OctoMapGizmoMode, OctoMapGizmoPose, OctoMapHoverInfo, OctoMapInteractionMode, OctoMapMapSettings, OctoMapPaintedVoxels, OctoMapPathAlgorithm, OctoMapPathFailedDetail, OctoMapPathFailureReason, OctoMapPointClickedDetail, OctoMapPointCloud, OctoMapPointsChangedDetail, OctoMapProjectionSource, OctoMapReadyDetail, OctoMapRenderMode, OctoMapReply, OctoMapSelectionBox, OctoMapWalkProgress, OctoMapWalkState };
+export { DEFAULT_OCTOMAP_SETTINGS, MAP_CONFIG_KEYS, Octomap3dPcdComponent };
+export type { OctomapBoundingBox, OctomapBrushMissDetail, OctomapCloudPreview, OctomapCloudRotation, OctomapCloudTranslation, OctomapDogModelRequest, OctomapGizmoMode, OctomapGizmoPose, OctomapHoverInfo, OctomapInteractionMode, OctomapMapSettings, OctomapPaintedVoxels, OctomapPathAlgorithm, OctomapPathFailedDetail, OctomapPathFailureReason, OctomapPointClickedDetail, OctomapPointCloud, OctomapPointsChangedDetail, OctomapProjectionSource, OctomapReadyDetail, OctomapRenderMode, OctomapReply, OctomapSelectionBox, OctomapWalkProgress, OctomapWalkState };
 //# sourceMappingURL=howell-octomap-3d.d.ts.map

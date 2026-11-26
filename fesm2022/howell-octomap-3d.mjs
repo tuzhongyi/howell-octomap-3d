@@ -30,7 +30,7 @@ import { TransformControls } from 'three/addons/controls/TransformControls.js';
  */
 function groundPlaneRect(bbox, extent, anchor) {
     // 兜底不是防御性编程：`config.service.ts` 把 `octomap.config.json` 裸断言成
-    // `OctoMapMapSettings`，手写资产里的 `"groundExtendX": "0.9"`（字符串）或 `null`
+    // `OctomapMapSettings`，手写资产里的 `"groundExtendX": "0.9"`（字符串）或 `null`
     // 会一路进到 `scale.set()` 里变成 NaN，而 NaN 的比例会让**整个平面消失**——
     // 连带着放狗/刷障碍的射线靶面一起没。负数同理（`Math.max` 之前先夹住）。
     const side = (v) => (Number.isFinite(v) ? Math.max(v, 0) : 0);
@@ -414,7 +414,7 @@ class Octomap3dPcdGlobal {
      *
      * 给出去的是**用户看到的那块平面**，不是 `grille.groundLevel`（那个跟着云走）。
      * 宿主按它把某一份云「贴到地面」上，两个数混用就会贴歪——见
-     * `OctoMapPointsChangedDetail.groundPlaneLevel`。
+     * `OctomapPointsChangedDetail.groundPlaneLevel`。
      */
     get referenceLevel() {
         return this.referenceAnchored ? this.referenceAnchor.y : null;
@@ -1303,9 +1303,9 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImpo
  */
 /**
  * `assets/config/octomap.config.json` 里必须出现的键，也就是
- * {@link OctoMapMapSettings} 的全部。
+ * {@link OctomapMapSettings} 的全部。
  *
- * 类型写成 `(keyof OctoMapMapSettings)[]` 是为了抓错别字：写一个不存在的键名直接是
+ * 类型写成 `(keyof OctomapMapSettings)[]` 是为了抓错别字：写一个不存在的键名直接是
  * 编译错。另一头（漏项、以及「文件里真写了这些键没有」）编译期看不见，由
  * `config.service.spec.ts` 拿真实的 JSON 对账。
  */
@@ -1350,7 +1350,7 @@ const MAP_CONFIG_KEYS = [
  * 这里用 `satisfies` 而非类型标注，因此各值保留字面量类型，可读回为具体默认值
  * （例如 `voxelSize` 是 `number`，而不是 `number | null`）。
  */
-const DEFAULT_OCTO_MAP_SETTINGS = {
+const DEFAULT_OCTOMAP_SETTINGS = {
     renderMode: 'voxel',
     voxelSize: 0.05,
     pointSize: null,
@@ -1509,7 +1509,7 @@ function navGridSize(bbox, start, goal, dogRadius) {
  */
 const RUN_GAP = 0.03;
 /**
- * 跨越候选的**格距**上限，12 格 = 0.6 m（{@link OctoMapNavConfig.crossWidth}）。
+ * 跨越候选的**格距**上限，12 格 = 0.6 m（{@link OctomapNavConfig.crossWidth}）。
  *
  * 设置面板的滑杆最大只到 0.3 m（6 格），这里是给手改配置文件留的兜底：格距每加一格，
  * 每个节点要枚举的候选邻居数按平方涨（`π·d²`），而 A* 每扩展一个节点都要走一遍，
@@ -1540,7 +1540,7 @@ const SURFACE_BAND = 0.05;
 const FILL_RADIUS_MIN = 2;
 const FILL_RADIUS_MAX = 12;
 /**
- * {@link OctoMapMapSettings.fillBaseCells} 的上限（格）：认领高度最多拿多大的邻域当基准。
+ * {@link OctomapMapSettings.fillBaseCells} 的上限（格）：认领高度最多拿多大的邻域当基准。
  *
  * 它是个**性能护栏**，和 `MAX_CROSS_CELLS` / `FILL_RADIUS_MAX` 同一类：`minLo` 的传播
  * 是「窗口」趟 8 邻取最小，而窗口取 `max(半径, 设置值)`（见 {@link fillEmptyColumns}），
@@ -1836,14 +1836,14 @@ class Octomap3dPcdNavSurface {
      * 仍然是虚拟 run（仍然跳过全部净空判定），节点数、run id、`runOffset` 全都不变。
      * 这一条是整套改法安全的前提，不能顺手「改进」成真实的 run。
      *
-     * `fillBaseCells` 是设置里的「填充基准范围」（见 {@link OctoMapMapSettings.fillBaseCells}），
+     * `fillBaseCells` 是设置里的「填充基准范围」（见 {@link OctomapMapSettings.fillBaseCells}），
      * 只在 `fillFromNeighbors` 打开时有意义：它放大那道高度守卫的**基准邻域**，于是更
      * 多的空列会因为「认领到的面比这一带的本地地面高太多」而被拒、退回 `groundLevel`。
      * 它是**建图参数**，跟 `step` / `crossWidth` 那些不同——后者要到 `configure` 才拿得到，
      * 而填充在 `build` 里就把高度定死了（这也是 `FILL_MAX_RISE` 刻意不跟 `step` 挂钩的
      * 原因之一，见那条注释的末段）。
      */
-    static build(positions, nx, nz, minX, minZ, cell, groundLevel, fillFromNeighbors = false, fillBaseCells = DEFAULT_OCTO_MAP_SETTINGS.fillBaseCells) {
+    static build(positions, nx, nz, minX, minZ, cell, groundLevel, fillFromNeighbors = false, fillBaseCells = DEFAULT_OCTOMAP_SETTINGS.fillBaseCells) {
         const cellCount = nx * nz;
         const counts = new Uint32Array(cellCount);
         let inGrid = 0;
@@ -2127,7 +2127,7 @@ class Octomap3dPcdNavSurface {
      * 高度以内时，家具下面那层能站的地面就再也进不去了（改动前的单层模型是能进的）；
      * 而「最高的那个恰好不可站」还会把整条边判死，明明还有更低的合法落点。
      *
-     * 八邻之外还有一圈**跨越**的邻居（{@link OctoMapNavConfig.crossWidth}）：格距在
+     * 八邻之外还有一圈**跨越**的邻居（{@link OctomapNavConfig.crossWidth}）：格距在
      * 「一个跨越宽度 + 一格」以内的列都可以直接连边，条件是路上那些中间格过得去
      * （{@link crossClear}）。地上的坑因此能跨过去，而不必踩到坑底。跨界照样受跨越
      * 高度限制——一步跨过去，脚抬起来的那一下和爬台阶是同一条规矩。
@@ -2693,7 +2693,7 @@ function emptyPlan() {
  * 在**表面图**上做 A* 的那一套算法，与「表面图怎么建」正交。
  *
  * 一个算法 = 一个子类，靠 {@link buildSurface} 这一个钩子区分。分开是为了让
- * `OctoMapMapSettings.pathAlgorithm` 能选：现有那条（每列一个常数虚拟地面）与新的
+ * `OctomapMapSettings.pathAlgorithm` 能选：现有那条（每列一个常数虚拟地面）与新的
  * 那条（空列从邻居取面高）共用全部搜索、平滑、吸附逻辑，**只差表面图怎么建**。
  *
  * 为什么是这个粒度而不是「每个算法一整份」：A* 的记账、平滑的判据、起终点吸附
@@ -2753,7 +2753,7 @@ class Octomap3dPcdPathPlanner {
         if (startNode < 0 || goalNode < 0) {
             return emptyPlan();
         }
-        // 终点**浮在半空**吗（见 `OctoMapPathFailureReason` 的 `goalTooHigh`）。
+        // 终点**浮在半空**吗（见 `OctomapPathFailureReason` 的 `goalTooHigh`）。
         //
         // 不拦的话它会被**静默地**变成一条成功的路边小事：`mapPoint` 第 3 段把终点一路
         // 吸附到地面上，路径忠实地走到终点正下方，于是 `0.139 m < goalRadius 0.5 m`
@@ -2763,7 +2763,7 @@ class Octomap3dPcdPathPlanner {
         // 「末端离终点 5.8 m」会把用户引到「终点范围」那根滑杆上去。）
         //
         // 「那一列有没有面接着终点」——量一次、两处用：这儿判 `goalTooHigh`，调用方判
-        // 接受范围量几维（见 `OctoMapPathPlan.goalOnFace`）。它是下面第 1 条的**取反**，
+        // 接受范围量几维（见 `OctomapPathPlan.goalOnFace`）。它是下面第 1 条的**取反**，
         // 所以两处的容差天生一致，不会出现「这边说浮空、那边说在面上」。
         //
         // 容差**取 `cell` 不是随手取的**——它正是 `mapPoint` 第 1 段认「点到的那个面」
@@ -3240,7 +3240,7 @@ class Octomap3dPcdPathCloudFit extends Octomap3dPcdPathPlanner {
  * 能工作，小狗可以绕到建筑外面去），以及平面上的代价处处相同（因此不会为了抄近路
  * 而跳着走）。
  *
- * 它的代价则记在 {@link OctoMapPathAlgorithm} 上：那些虚拟地面 run 的高度是个**常数**，
+ * 它的代价则记在 {@link OctomapPathAlgorithm} 上：那些虚拟地面 run 的高度是个**常数**，
  * 跟它旁边有没有地板无关。
  */
 class Octomap3dPcdPathSurfaceGraph extends Octomap3dPcdPathPlanner {
@@ -3297,7 +3297,7 @@ const NAV_LIMIT_EXCEEDED_COLOR = '#d946ef';
  * 持有导航终点、渲染出的路径，以及**这一次**规划的失败缘由。
  *
  * 规划本身**不在这里**：真正搜路的是一组 `Octomap3dPcdPathPlanner`，按
- * {@link OctoMapMapSettings.pathAlgorithm} 选一个（见 {@link setAlgorithm}）。这个类
+ * {@link OctomapMapSettings.pathAlgorithm} 选一个（见 {@link setAlgorithm}）。这个类
  * 是它们的外壳，管三件事：
  *
  * 1. **建网格参数**（{@link navGridSize}，与绘制规划范围框共用同一份推导）并判上限；
@@ -3307,7 +3307,7 @@ const NAV_LIMIT_EXCEEDED_COLOR = '#d946ef';
  *    {@link goalTooHigh} 四个字段加 {@link failedReason}。规划器把后三个整份返回，
  *    这里无条件抄回。
  *
- * 拆开是因为「小狗走的那张面」现在是个**可选**的东西（见 {@link OctoMapPathAlgorithm}），
+ * 拆开是因为「小狗走的那张面」现在是个**可选**的东西（见 {@link OctomapPathAlgorithm}），
  * 而搜索、平滑、起终点吸附那一套与它无关、且各自都有一堆量出来的坑，不该跟着复制。
  *
  * 不变的部分是每一步的「站不站得住」判据（「身子那一带不许有几何」，从**脚下的那个
@@ -3337,9 +3337,9 @@ class Octomap3dPcdPath {
      * 时因为 `viewInitialized` 还是 false 而整个跳过，所以这里**必须**等于默认值，
      * 否则用户没动过这一项时就悄悄用了另一个数。
      */
-    goalRadius = DEFAULT_OCTO_MAP_SETTINGS.goalRadius;
+    goalRadius = DEFAULT_OCTOMAP_SETTINGS.goalRadius;
     /**
-     * 「填充基准范围」（单位：格），见 {@link OctoMapMapSettings.fillBaseCells}；改它走
+     * 「填充基准范围」（单位：格），见 {@link OctomapMapSettings.fillBaseCells}；改它走
      * {@link setFillBaseCells}。
      *
      * 和 {@link goalRadius} 一样是**字段**而不是 {@link computePath} 的第 12 个位置参数：
@@ -3351,7 +3351,7 @@ class Octomap3dPcdPath {
      * `viewInitialized` 还是 false 而整个跳过，所以这里**必须**等于默认值，否则用户没动过
      * 这一项时就悄悄用了另一个数。
      */
-    fillBaseCells = DEFAULT_OCTO_MAP_SETTINGS.fillBaseCells;
+    fillBaseCells = DEFAULT_OCTOMAP_SETTINGS.fillBaseCells;
     /**
      * 上一次 {@link computePath} 是否因为规划网格超过 `MAX_FREE_CELLS` 而放弃。
      *
@@ -3468,26 +3468,26 @@ class Octomap3dPcdPath {
      * 设置面板上「显示规划范围」那个开关。超限时无视它，见 {@link refreshNavLimit}。
      *
      * 初值取默认设置而不是抄字面量（首次绑定会被 `ngOnChanges` 跳过，这里必须是那个
-     * 默认值）；显式标注 `boolean` 则是因为 `DEFAULT_OCTO_MAP_SETTINGS` 用 `satisfies`
+     * 默认值）；显式标注 `boolean` 则是因为 `DEFAULT_OCTOMAP_SETTINGS` 用 `satisfies`
      * 收尾、各值保留字面量类型，不标注就会被推成 `true`。
      */
-    navLimitVisible = DEFAULT_OCTO_MAP_SETTINGS.showNavLimit;
+    navLimitVisible = DEFAULT_OCTOMAP_SETTINGS.showNavLimit;
     /**
      * 设置面板路径页上「显示路径」那个开关的当前值。新画的管子按它决定露不露面（见
      * {@link drawPath}）——`setPathVisible` 只改得到**已经**画出来的那根。
      */
-    pathVisible = DEFAULT_OCTO_MAP_SETTINGS.showPath;
+    pathVisible = DEFAULT_OCTOMAP_SETTINGS.showPath;
     /**
      * 设置面板路径页上「标出路径点」那个开关。
      *
      * 与 {@link pathVisible} **互不干涉**：那个只管管子，这个只管珠子（见
-     * `OctoMapMapSettings.showPathPoints`）。两个都是布尔显示开关，谁也管不着谁。
+     * `OctomapMapSettings.showPathPoints`）。两个都是布尔显示开关，谁也管不着谁。
      *
-     * 显式标注 `boolean`：`DEFAULT_OCTO_MAP_SETTINGS` 用 `satisfies` 收尾、各值保留
+     * 显式标注 `boolean`：`DEFAULT_OCTOMAP_SETTINGS` 用 `satisfies` 收尾、各值保留
      * 字面量类型，不标注就会被推成 `false`（那个默认值恰好是 `false`，于是写不进去
      * `true`）。
      */
-    pathPointsVisible = DEFAULT_OCTO_MAP_SETTINGS.showPathPoints;
+    pathPointsVisible = DEFAULT_OCTOMAP_SETTINGS.showPathPoints;
     /** 小狗碰撞足迹的底面半径，装饰尺寸的主参考。 */
     dogRadius = 0.25;
     /** 小狗的通行高度，决定路径管悬浮的高度。 */
@@ -3498,10 +3498,10 @@ class Octomap3dPcdPath {
      * 当前选中的寻路方式，见 {@link setAlgorithm}。
      *
      * 初值取默认设置而不是抄字面量（首次绑定会被 `ngOnChanges` 跳过，这里必须是那个
-     * 默认值）；标注 `OctoMapPathAlgorithm` 则是因为 `DEFAULT_OCTO_MAP_SETTINGS` 用
+     * 默认值）；标注 `OctomapPathAlgorithm` 则是因为 `DEFAULT_OCTOMAP_SETTINGS` 用
      * `satisfies` 收尾、各值保留字面量类型。
      */
-    algorithm = DEFAULT_OCTO_MAP_SETTINGS.pathAlgorithm;
+    algorithm = DEFAULT_OCTOMAP_SETTINGS.pathAlgorithm;
     /**
      * 已经建出来的规划器，按算法缓存。
      *
@@ -3520,7 +3520,7 @@ class Octomap3dPcdPath {
      * 这两样装饰不该是固定尺寸——同一个 0.4 m 的锥，摆在 0.65 m 的椅子上占掉大半
      * 屏，放进几十米的扫描里又只是个小点。它们跟着碰撞足迹走，因为那是用户直接调
      * 的量（「碰撞半径」「通行高度」），也正是寻路里把障碍外扩、让小狗不蹭墙的同一
-     * 个数（见 `OctoMapPathGrid.CELL_SAFETY`）。体素大小只作下限，见 {@link CONE_VOXEL_RATIO}。
+     * 个数（见 `OctomapPathGrid.CELL_SAFETY`）。体素大小只作下限，见 {@link CONE_VOXEL_RATIO}。
      *
      * 参数没变就直接返回：设置面板上任何一项改动都会走到这里，而为一次无关的重建
      * 重画一根几万个顶点的管不值得。
@@ -3604,7 +3604,7 @@ class Octomap3dPcdPath {
         this.drawPathPointMarkers();
     }
     /**
-     * 换一种寻路方式（设置面板上那个下拉，见 {@link OctoMapPathAlgorithm}）。
+     * 换一种寻路方式（设置面板上那个下拉，见 {@link OctomapPathAlgorithm}）。
      *
      * **不会自动重规划**：和这个面板上其它每一项一样，改完要重新点「找路径」才生效
      * （面板上那句提示说的就是这件事）。这里只决定下一次用哪个规划器。
@@ -3788,13 +3788,13 @@ class Octomap3dPcdPath {
      * 体素。返回有序的世界坐标点列表（沿地形表面走，可以一级级爬上台阶和桌面，
      * 也能一步跨过地上的小坑），或 null。
      *
-     * `crossWidth` 是「跨越宽度」（见 {@link OctoMapMapSettings.crossWidth}）：无支撑的
+     * `crossWidth` 是「跨越宽度」（见 {@link OctomapMapSettings.crossWidth}）：无支撑的
      * 那一段不超过它就允许一步跨过去，0 表示只走相邻格。
      *
      * `groundLevel` 是扫描出的地板高度，由点云那一侧（`Octomap3dPcdGrille`）
      * 算好传进来：地面平面和参考网格用的也是同一个值，路径因此画在可见的地面上，
      * 而不是世界原点那一层。没有点的那一列按它补出来——**这是 `'surfaceGraph'` 的
-     * 说法**，别的算法可以拿它当「附近没有源时才用的兜底」（见 `OctoMapPathAlgorithm`）。
+     * 说法**，别的算法可以拿它当「附近没有源时才用的兜底」（见 `OctomapPathAlgorithm`）。
      *
      * 签名保持**十一个位置参数**、一条不增删：这个类的构造签名和它一起被 spec 里的
      * `null as never` 依赖着，改成对象会牵动一堆无关分支。真正的请求对象在
@@ -4801,7 +4801,7 @@ class Octomap3dPcdGrille {
     /**
      * 把(x, y, z) 周围 `radius` 范围内的所有占用体素标记为禁行障碍。
      *
-     * 返回两个数，供调用方判「这一笔有没有刷到东西」（见 `OctoMapBrushMissDetail`）：
+     * 返回两个数，供调用方判「这一笔有没有刷到东西」（见 `OctomapBrushMissDetail`）：
      *
      * - `marked`：本次**新**标记的体素数；
      * - `occupied`：范围内**已占用**的体素数（`grid.has`），**与是否已被禁无关**。
@@ -5829,7 +5829,7 @@ class Octomap3dPcd {
     /**
      * 在体素中心周围刷上障碍。返回值原样来自
      * {@link Octomap3dPcdPoint.brushAt}——`occupied === 0` 就是「这一带没有点」，
-     * 调用方拿它决定要不要提示（见 `OctoMapBrushMissDetail`）。
+     * 调用方拿它决定要不要提示（见 `OctomapBrushMissDetail`）。
      */
     brush(center, radius, options) {
         return this.grille.brushAt(center[0], center[1], center[2], radius, options);
@@ -5883,7 +5883,7 @@ class Octomap3dPcd {
     }
     /**
      * 从小狗到终点运行 A* 并绘制路径（不行进）。路径沿地面跟随地形，能一步跨过
-     * 地上的小坑（见 {@link OctoMapMapSettings.crossWidth}）。
+     * 地上的小坑（见 {@link OctomapMapSettings.crossWidth}）。
      */
     findPath(maxStepHeight, crossWidth, dogRadius, dogHeight, groundExtendsOutside) {
         const params = { maxStepHeight, crossWidth, dogRadius, dogHeight };
@@ -5942,7 +5942,7 @@ class Octomap3dPcd {
             // 用户看着狗停在桌子底下，只会以为是自己没点准。
             //
             // 距离给 null：这里要用户动的不是终点范围，再报一个水平距离只会把人往那根滑杆上
-            // 引（见 OctoMapPathFailedDetail.distance）。到底哪一句由规划器定。
+            // 引（见 OctomapPathFailedDetail.distance）。到底哪一句由规划器定。
             this.dog.stop();
             this.logPlan(start, goal, points, this.failureText(), params);
             this.path.noPath(this.path.failedReason(), null);
@@ -6122,7 +6122,7 @@ class Octomap3dPcdComponent {
     points = null;
     /**
      * 拖动中的整体变换预览：把合并点云里的一段点当成刚体挪一下（见
-     * {@link OctoMapCloudPreview}）。非 null 时**只改画面**，其余一概不碰。
+     * {@link OctomapCloudPreview}）。非 null 时**只改画面**，其余一概不碰。
      *
      * 多份点云拼成了一份渲染对象（手柄只该动其中一份），整份对象一挪会把别的云也
      * 带走，所以这里只动选中那一份：体素模式改写它占的那些实例矩阵，点云模式重画一份
@@ -6147,7 +6147,7 @@ class Octomap3dPcdComponent {
      *
      * 位置由宿主给（不是地图自己算包围盒中心）：云转过之后包围盒中心会漂，而宿主
      * 记账用的支点不会——两边不一致的话每转一次松手画面就跳一下。见
-     * {@link OctoMapGizmoPose}。
+     * {@link OctomapGizmoPose}。
      */
     gizmoPose = null;
     /**
@@ -6207,18 +6207,18 @@ class Octomap3dPcdComponent {
     /**
      * 是否显示规划网格能覆盖的范围。场景超限时无视它，强制显示。
      *
-     * 显式标注 `boolean`：`DEFAULT_OCTO_MAP_SETTINGS` 是用 `satisfies` 收尾的，各值
-     * 都保留字面量类型，所以 `= DEFAULT_OCTO_MAP_SETTINGS.showNavLimit` 会被推成
+     * 显式标注 `boolean`：`DEFAULT_OCTOMAP_SETTINGS` 是用 `satisfies` 收尾的，各值
+     * 都保留字面量类型，所以 `= DEFAULT_OCTOMAP_SETTINGS.showNavLimit` 会被推成
      * `true`，父组件绑 `false` 就编译不过。
      */
-    showNavLimit = DEFAULT_OCTO_MAP_SETTINGS.showNavLimit;
+    showNavLimit = DEFAULT_OCTOMAP_SETTINGS.showNavLimit;
     /**
      * 是否画出规划出来的路径。关掉只是隐藏，规划结果和行进都不受影响。
      *
      * 同样必须显式标注 `boolean`（与 {@link showNavLimit} 同一个坑，见
      * [[default-settings-literal-type]]）。
      */
-    showPath = DEFAULT_OCTO_MAP_SETTINGS.showPath;
+    showPath = DEFAULT_OCTOMAP_SETTINGS.showPath;
     /**
      * 是否把路径的每个顶点标成一颗珠子。与 {@link showPath} 各管各的：那一项只管管子。
      *
@@ -6226,7 +6226,7 @@ class Octomap3dPcdComponent {
      * [[default-settings-literal-type]]）——这里的默认值恰好是 `false`，不标注就再也
      * 写不进 `true`。
      */
-    showPathPoints = DEFAULT_OCTO_MAP_SETTINGS.showPathPoints;
+    showPathPoints = DEFAULT_OCTOMAP_SETTINGS.showPathPoints;
     /** 参考网格的大小（世界单位）。 */
     gridSize = 10;
     /** 每个网格单元的细分数。 */
@@ -6244,12 +6244,12 @@ class Octomap3dPcdComponent {
     /** 鼠标交互在地图上的解释方式。 */
     interactionMode = 'view';
     /**
-     * 障碍刷的半径（世界单位）。默认值与 {@link DEFAULT_OCTO_MAP_SETTINGS} 一致，不抄
+     * 障碍刷的半径（世界单位）。默认值与 {@link DEFAULT_OCTOMAP_SETTINGS} 一致，不抄
      * 字面量：首次绑定会被 `ngOnChanges` 跳过（见记忆 `ngOnChanges-skips-first-binding`），
      * 所以这里的初值必须就是那个默认值。**显式标注 `number`** 则是因为默认设置用
      * `satisfies` 收尾、各值保留字面量类型（见记忆 `default-settings-literal-type`）。
      */
-    brushRadius = DEFAULT_OCTO_MAP_SETTINGS.brushRadius;
+    brushRadius = DEFAULT_OCTOMAP_SETTINGS.brushRadius;
     /** 小狗能迈过/爬过的最大高度（世界单位）。 */
     maxStepHeight = 0.5;
     /**
@@ -6258,12 +6258,12 @@ class Octomap3dPcdComponent {
     crossWidth = 0.125;
     /**
      * 「填充基准范围」（单位：导航格），只影响「贴云点面」那一档，见
-     * {@link OctoMapMapSettings.fillBaseCells}。
+     * {@link OctomapMapSettings.fillBaseCells}。
      *
-     * 显式标注 `number` 是因为 `DEFAULT_OCTO_MAP_SETTINGS` 用 `satisfies` 收尾、各值
+     * 显式标注 `number` 是因为 `DEFAULT_OCTOMAP_SETTINGS` 用 `satisfies` 收尾、各值
      * 保留字面量类型，不标注就会被推成 `8`。
      */
-    fillBaseCells = DEFAULT_OCTO_MAP_SETTINGS.fillBaseCells;
+    fillBaseCells = DEFAULT_OCTOMAP_SETTINGS.fillBaseCells;
     /**
      * 终点的接受范围半径（世界单位）。路径末端落在这个半径之外就按「没找到路径」
      * 处理，并发出 `(pathFailed)`；终点周围画一圈同样大小的圆环标出这条边界。
@@ -6292,21 +6292,21 @@ class Octomap3dPcdComponent {
     /**
      * 地面平面沿 X 轴向包围盒外延展的长度（单边，世界单位）。
      *
-     * 显式标注 `: number`：`DEFAULT_OCTO_MAP_SETTINGS` 用 `satisfies` 收尾、各值保留
+     * 显式标注 `: number`：`DEFAULT_OCTOMAP_SETTINGS` 用 `satisfies` 收尾、各值保留
      * 字面量类型，抄初值会被推成 `0.9`，父组件传别的数就编译不过（与
      * {@link pathAlgorithm} 同一个坑，见 [[default-settings-literal-type]]）。
      */
-    groundExtendX = DEFAULT_OCTO_MAP_SETTINGS.groundExtendX;
+    groundExtendX = DEFAULT_OCTOMAP_SETTINGS.groundExtendX;
     /** 地面平面沿 Z 轴向包围盒外延展的宽度（单边，世界单位）。 */
-    groundExtendZ = DEFAULT_OCTO_MAP_SETTINGS.groundExtendZ;
+    groundExtendZ = DEFAULT_OCTOMAP_SETTINGS.groundExtendZ;
     /**
-     * 用哪种方式寻路，见 {@link OctoMapPathAlgorithm}。
+     * 用哪种方式寻路，见 {@link OctomapPathAlgorithm}。
      *
-     * 显式标注 `OctoMapPathAlgorithm`：`DEFAULT_OCTO_MAP_SETTINGS` 用 `satisfies` 收尾，
+     * 显式标注 `OctomapPathAlgorithm`：`DEFAULT_OCTOMAP_SETTINGS` 用 `satisfies` 收尾，
      * 各值保留字面量类型，抄初值会被推成 `'surfaceGraph'`，父组件换一种就编译不过
      * （与 {@link showNavLimit} 同一个坑，见 [[default-settings-literal-type]]）。
      */
-    pathAlgorithm = DEFAULT_OCTO_MAP_SETTINGS.pathAlgorithm;
+    pathAlgorithm = DEFAULT_OCTOMAP_SETTINGS.pathAlgorithm;
     /** 点击时射线拾取的点数上限（点云模式的安全保护）。 */
     maxPickingPoints = 1_000_000;
     // ---- 命令型输入 --------------------------------------------------------------
@@ -6340,7 +6340,7 @@ class Octomap3dPcdComponent {
     /** 清掉外部模型，恢复内置几何体小狗。 */
     clearDogModel = new EventEmitter();
     // 下面四个是取值型：payload 是「回填函数」，子组件算出结果就调它，见
-    // {@link OctoMapReply}。`loadDogModel` 是唯一异步的一条。
+    // {@link OctomapReply}。`loadDogModel` 是唯一异步的一条。
     /**
      * 用外部模型文件替换小狗的内置几何体。`url` 可以是 blob/object URL 或静态
      * 资源路径。不传 `reply` 时失败静默。
@@ -6412,7 +6412,7 @@ class Octomap3dPcdComponent {
      *
      * 一次按下到抬起之间**最多一次**（见 `brushMissed`）；「空处按下」不发——那是要转
      * 相机；擦除不发——在没有障碍的地方擦是常事。父组件拿它给用户一句话
-     * （见 `OctoMapBrushMissDetail`）。
+     * （见 `OctomapBrushMissDetail`）。
      */
     brushMiss = new EventEmitter();
     /** 用户右键退出编辑器模式（回到视图模式）时发出。 */
@@ -6943,7 +6943,7 @@ class Octomap3dPcdComponent {
         }
         this.brushMissed = true;
         // 报**实际**的体素大小（`voxelSize` 那个输入可以是 null = 自动），文案里要拿它
-        // 说明「笔刷半径才几格」，见 `OctoMapBrushMissDetail`。
+        // 说明「笔刷半径才几格」，见 `OctomapBrushMissDetail`。
         this.brushMiss.emit({
             radius: this.brushRadius,
             voxelSize: this.controller.grille.grid?.voxelSize ?? 0,
@@ -7248,5 +7248,5 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImpo
  * Generated bundle index. Do not edit.
  */
 
-export { DEFAULT_OCTO_MAP_SETTINGS, MAP_CONFIG_KEYS, Octomap3dPcdComponent };
+export { DEFAULT_OCTOMAP_SETTINGS, MAP_CONFIG_KEYS, Octomap3dPcdComponent };
 //# sourceMappingURL=howell-octomap-3d.mjs.map
