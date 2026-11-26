@@ -1037,6 +1037,98 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
     static ɵcmp: i0.ɵɵComponentDeclaration<Octomap3dPcdComponent, "howell-octomap-3d-pcd", never, { "points": { "alias": "points"; "required": false; }; "preview": { "alias": "preview"; "required": false; }; "gizmoMode": { "alias": "gizmoMode"; "required": false; }; "gizmoPose": { "alias": "gizmoPose"; "required": false; }; "selectionBox": { "alias": "selectionBox"; "required": false; }; "gizmoPreview": { "alias": "gizmoPreview"; "required": false; }; "fitOnPointsChange": { "alias": "fitOnPointsChange"; "required": false; }; "refitReferenceOnPointsChange": { "alias": "refitReferenceOnPointsChange"; "required": false; }; "gizmoReadout": { "alias": "gizmoReadout"; "required": false; }; "renderMode": { "alias": "renderMode"; "required": false; }; "voxelSize": { "alias": "voxelSize"; "required": false; }; "backgroundColor": { "alias": "backgroundColor"; "required": false; }; "pointColor": { "alias": "pointColor"; "required": false; }; "pointSize": { "alias": "pointSize"; "required": false; }; "showGrid": { "alias": "showGrid"; "required": false; }; "showNavLimit": { "alias": "showNavLimit"; "required": false; }; "showPath": { "alias": "showPath"; "required": false; }; "showPathPoints": { "alias": "showPathPoints"; "required": false; }; "gridSize": { "alias": "gridSize"; "required": false; }; "gridDivisions": { "alias": "gridDivisions"; "required": false; }; "fitView": { "alias": "fitView"; "required": false; }; "autoRotate": { "alias": "autoRotate"; "required": false; }; "showColoring": { "alias": "showColoring"; "required": false; }; "forbiddenColor": { "alias": "forbiddenColor"; "required": false; }; "painted": { "alias": "painted"; "required": false; }; "interactionMode": { "alias": "interactionMode"; "required": false; }; "brushRadius": { "alias": "brushRadius"; "required": false; }; "maxStepHeight": { "alias": "maxStepHeight"; "required": false; }; "crossWidth": { "alias": "crossWidth"; "required": false; }; "fillBaseCells": { "alias": "fillBaseCells"; "required": false; }; "goalRadius": { "alias": "goalRadius"; "required": false; }; "dogRadius": { "alias": "dogRadius"; "required": false; }; "dogHeight": { "alias": "dogHeight"; "required": false; }; "showDogCollision": { "alias": "showDogCollision"; "required": false; }; "dogScale": { "alias": "dogScale"; "required": false; }; "dogFitCollision": { "alias": "dogFitCollision"; "required": false; }; "dogModelHeading": { "alias": "dogModelHeading"; "required": false; }; "dogHeading": { "alias": "dogHeading"; "required": false; }; "maxHeight": { "alias": "maxHeight"; "required": false; }; "minHeight": { "alias": "minHeight"; "required": false; }; "groundExtendsOutside": { "alias": "groundExtendsOutside"; "required": false; }; "groundExtendX": { "alias": "groundExtendX"; "required": false; }; "groundExtendZ": { "alias": "groundExtendZ"; "required": false; }; "pathAlgorithm": { "alias": "pathAlgorithm"; "required": false; }; "maxPickingPoints": { "alias": "maxPickingPoints"; "required": false; }; "findPath": { "alias": "findPath"; "required": false; }; "startWalk": { "alias": "startWalk"; "required": false; }; "seekWalk": { "alias": "seekWalk"; "required": false; }; "pauseWalk": { "alias": "pauseWalk"; "required": false; }; "resumeWalk": { "alias": "resumeWalk"; "required": false; }; "clearDeployment": { "alias": "clearDeployment"; "required": false; }; "markAllObstacles": { "alias": "markAllObstacles"; "required": false; }; "clearObstacles": { "alias": "clearObstacles"; "required": false; }; "clearDogModel": { "alias": "clearDogModel"; "required": false; }; "loadDogModel": { "alias": "loadDogModel"; "required": false; }; "exportPointCloud": { "alias": "exportPointCloud"; "required": false; }; "regularizeCloud": { "alias": "regularizeCloud"; "required": false; }; "projectionSource": { "alias": "projectionSource"; "required": false; }; }, { "mapReady": "mapReady"; "pointsChanged": "pointsChanged"; "cloudTranslated": "cloudTranslated"; "cloudTranslating": "cloudTranslating"; "cloudRotated": "cloudRotated"; "cloudRotating": "cloudRotating"; "pointClicked": "pointClicked"; "pathChanged": "pathChanged"; "pathFailed": "pathFailed"; "walkProgress": "walkProgress"; "dogPlaced": "dogPlaced"; "goalPlaced": "goalPlaced"; "paintedChanged": "paintedChanged"; "brushMiss": "brushMiss"; "interactionModeChange": "interactionModeChange"; "error": "error"; }, never, never, true, never>;
 }
 
-export { DEFAULT_OCTOMAP_SETTINGS, MAP_CONFIG_KEYS, Octomap3dPcdComponent };
+/**
+ * 点云「地板」的纯函数。
+ *
+ * 单独成文件是因为它有两个消费者：地图拿它定地面平面 / 参考网格 / 寻路阈值的高度
+ * 基准（`Octomap3dPcdGrille.groundLevel`），宿主拿它算「贴合地面」该挪多少
+ * （`SystemManagerComponent.alignCloudTranslation`）。两边必须是**同一条规则**——
+ * 差一厘米，按那一下按钮就会把云挪出一厘米。
+ */
+/**
+ * 一片点云的地板高度（世界 Y）。
+ *
+ * 取**约 1% 分位**而不是最小值：扫描出来的地板总带着几粒飞点，直接用最小值会让整个
+ * 地面（平面、网格、寻路阈值）被一粒噪点拽下去；取到最低的 1% 上，就落在地板面上。
+ *
+ * **前提是 Y 轴朝上**（地板在点的最低处）。相机坐标系（Y 朝下）的扫描要先翻到 Y 朝上
+ * 再交给它，否则这里取到的是场景顶部，狗会沿着天花板走。
+ *
+ * 没有点（或只有残缺的一组坐标）时返回 0——「有没有点云」由调用方自己把关。
+ */
+declare function cloudFloorY(positions: Float32Array): number;
+
+/**
+ * 查看器一次愿意渲染的体素上限。与 `buildVoxels` 共用同一个数字，避免两处
+ * 上限各自漂移：抽稀结果超过它，查看器同样会拒绝。
+ *
+ * 查看器自己遇到超限不再直接报错：它把格边长翻倍重试，直到落进这个数以内
+ * （见 `octomap-3d-pcd-point.controller.ts` 的 `buildVoxels`），并在工具栏说明实际用了哪一档。
+ */
+declare const MAX_VOXEL_COUNT = 2000000;
+/** 累加器超过体素上限时抛出，便于调用方区分并提示换用更大的体素尺寸。 */
+declare class VoxelLimitError extends Error {
+    /** 触发时的体素数量。 */
+    readonly cellCount: number;
+    /** 允许的上限。 */
+    readonly maxCells: number;
+    constructor(cellCount: number, maxCells: number);
+}
+/**
+ * 把大点云按体素抽稀成小点云，语义与查看器的 `buildVoxels` 对齐：
+ * 每格的颜色取**格内平均**，输出的点落在**格中心**，而不是「每格留第一个点」。
+ *
+ * 原点固定为 `[0, 0, 0]`（而不是包围盒最小值），因此是单遍处理——不需要为了
+ * 求包围盒先把几十 GB 的数据扫一遍，这在流式读取里是决定性的。
+ *
+ * 输出用格中心（而非某个原始点）是刻意的，这让结果尺寸可预测：把抽稀结果交给
+ * 查看器、用同一个体素尺寸再体素化一次时，每个点最多只会落到 0 或 1 格之外，
+ * 因此**格数只会持平或略减，绝不会增长**——抽稀到不超过上限，就一定不会撞上
+ * 查看器自己的上限。略减的原因是浮点：查看器以包围盒最小值为原点，而这个值
+ * 本身就是一个格中心（即它自己的格边界），于是每个抽稀点都恰好压在边界上，
+ * 极少数相邻格会因舍入而合并（实测约 0.02%）。
+ */
+declare class VoxelAccumulator {
+    private readonly voxelSize;
+    private readonly maxCells;
+    /** 数值体素键 → 槽位下标，槽位按首次出现顺序分配。 */
+    private readonly slots;
+    /** 各格的整数格坐标；与 `slots` 一一对应。 */
+    private cellX;
+    private cellY;
+    private cellZ;
+    /** 各格的颜色分量之和与点数，仅在带颜色时累加。 */
+    private sumR;
+    private sumG;
+    private sumB;
+    private hits;
+    private used;
+    private beyondRange;
+    constructor(voxelSize: number, maxCells?: number);
+    /** 已占用的体素数量。 */
+    get cellCount(): number;
+    /** 因坐标超出可表示范围而被丢弃的点数。 */
+    get outOfRangeCount(): number;
+    /** 把一个点并入它所属的体素。`r`/`g`/`b` 仅在 `hasColor` 为真时参与平均。 */
+    add(x: number, y: number, z: number, r: number, g: number, b: number, hasColor: boolean): void;
+    /**
+     * 导出抽稀后的点云：每格一个点，位于格中心；带颜色时为格内平均色。
+     * 输出顺序是各格首次出现的顺序，因此对同一份输入稳定可复现。
+     */
+    toCloud(hasColors: boolean): OctomapPointCloud;
+    /** 槽位数组容量翻倍。 */
+    private grow;
+}
+
+/**
+ * 导航网格的分辨率（世界单位），固定不变，与用于渲染的体素大小无关。保持这个精细
+ * （且固定）的分辨率，意味着无论绘制的体素多粗，门和狭窄缝隙对规划器都仍然可见。
+ *
+ * 注意它现在和默认的 `voxelSize` 数值相同（都是 0.05），但这仍然只是巧合——本常量
+ * 不从 `voxelSize` 推导，也不跟着它变。
+ */
+declare const NAV_CELL_SIZE = 0.05;
+
+export { DEFAULT_OCTOMAP_SETTINGS, MAP_CONFIG_KEYS, MAX_VOXEL_COUNT, NAV_CELL_SIZE, Octomap3dPcdComponent, VoxelAccumulator, VoxelLimitError, cloudFloorY };
 export type { OctomapBoundingBox, OctomapBrushMissDetail, OctomapCloudPreview, OctomapCloudRotation, OctomapCloudTranslation, OctomapDogModelRequest, OctomapGizmoMode, OctomapGizmoPose, OctomapHoverInfo, OctomapInteractionMode, OctomapMapSettings, OctomapPaintedVoxels, OctomapPathAlgorithm, OctomapPathFailedDetail, OctomapPathFailureReason, OctomapPointClickedDetail, OctomapPointCloud, OctomapPointsChangedDetail, OctomapProjectionSource, OctomapReadyDetail, OctomapRenderMode, OctomapReply, OctomapSelectionBox, OctomapWalkProgress, OctomapWalkState };
 //# sourceMappingURL=howell-octomap-3d.d.ts.map
