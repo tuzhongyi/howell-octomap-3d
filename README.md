@@ -19,7 +19,7 @@ peerDependencies 需要宿主自己安装：
 ## 使用
 
 ```ts
-import { OctoMapComponent, OctoMapPointCloud } from 'howell-octomap-3d';
+import { Octomap3dPcdComponent, OctoMapPointCloud } from 'howell-octomap-3d';
 ```
 
 组件选择器：`howell-octomap-3d-pcd`。点云通过 `points` 输入传入，状态变化通过 `@Output()` 上报。

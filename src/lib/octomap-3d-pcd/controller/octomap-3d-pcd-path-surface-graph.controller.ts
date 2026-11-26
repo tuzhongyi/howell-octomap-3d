@@ -1,11 +1,11 @@
 import { OctoMapPathAlgorithm } from '../octomap-3d-pcd.model';
-import { OctoMapNavSurface } from './octo-map-nav-surface';
-import { OctoMapPathPlanner } from './octo-map-path-planner';
+import { Octomap3dPcdNavSurface } from './octomap-3d-pcd-nav-surface';
+import { Octomap3dPcdPathPlanner } from './octomap-3d-pcd-path-planner';
 
 /**
  * 现有那条寻路：**每列一个常数虚拟地面**的表面图上做 A*。
  *
- * 这是从 `OctoMapPathController` 里原样搬过来的那一套，行为一个字节没动（重构前后
+ * 这是从 `Octomap3dPcdPath` 里原样搬过来的那一套，行为一个字节没动（重构前后
  * 的真图基线逐点相同，见 `q:\tmp\path-baseline.mjs`）。保留它不只是为了对照：它带来
  * 的两件事是别的建图方式不好替代的——空列一定有节点（`groundExtendsOutside` 因此
  * 能工作，小狗可以绕到建筑外面去），以及平面上的代价处处相同（因此不会为了抄近路
@@ -14,7 +14,7 @@ import { OctoMapPathPlanner } from './octo-map-path-planner';
  * 它的代价则记在 {@link OctoMapPathAlgorithm} 上：那些虚拟地面 run 的高度是个**常数**，
  * 跟它旁边有没有地板无关。
  */
-export class OctoMapPathSurfaceGraphController extends OctoMapPathPlanner {
+export class Octomap3dPcdPathSurfaceGraph extends Octomap3dPcdPathPlanner {
   readonly algorithm: OctoMapPathAlgorithm = 'surfaceGraph';
 
   /**
@@ -31,7 +31,7 @@ export class OctoMapPathSurfaceGraphController extends OctoMapPathPlanner {
     cell: number,
     groundLevel: number,
     _fillBaseCells: number,
-  ): OctoMapNavSurface {
-    return OctoMapNavSurface.build(positions, nx, nz, minX, minZ, cell, groundLevel);
+  ): Octomap3dPcdNavSurface {
+    return Octomap3dPcdNavSurface.build(positions, nx, nz, minX, minZ, cell, groundLevel);
   }
 }

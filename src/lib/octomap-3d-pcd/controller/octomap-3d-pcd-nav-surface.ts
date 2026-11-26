@@ -3,14 +3,14 @@ import { DEFAULT_OCTO_MAP_SETTINGS, OctoMapBoundingBox } from '../octomap-3d-pcd
 /**
  * 同一个 run 内相邻两点的最大竖直间距（世界单位）。
  *
- * 扫描出来的地面自带 1~3 cm 的起伏（见 `OctoMapPathPlanner` 里 `MIN_STEP_HEIGHT` 的
+ * 扫描出来的地面自带 1~3 cm 的起伏（见 `Octomap3dPcdPathPlanner` 里 `MIN_STEP_HEIGHT` 的
  * 注释），不合并的话一个平面会被噪声切成好几层，小狗在同一个地板上会有几十个
  * 「不同的高度」。
  *
  * 取 3 cm 是两头权衡：再小 → 噪声把平面切碎；再大 → 桌面会和它底下那层并成一块，
  * 于是「站在桌上」和「站在桌下」变成同一个 run。
  *
- * 可站判定里也用同一个值当「连成一片」的容差（{@link OctoMapNavSurface.standable}）：
+ * 可站判定里也用同一个值当「连成一片」的容差（{@link Octomap3dPcdNavSurface.standable}）：
  * 一个 run 的底端离局部表面比这更近，就算是我脚下的面的一部分，而不是悬空的一块。
  */
 const RUN_GAP = 0.03;
@@ -26,7 +26,7 @@ const RUN_GAP = 0.03;
 const MAX_CROSS_CELLS = 12;
 
 /**
- * 直线段算「贴着表面走」的竖直容差（米），只用在 {@link OctoMapNavSurface.segmentClear}。
+ * 直线段算「贴着表面走」的竖直容差（米），只用在 {@link Octomap3dPcdNavSurface.segmentClear}。
  *
  * **不能拿 `step`（跨越高度）当这个容差**：那是「迈一步的容许落差」，不是「表面起伏的
  * 容许量」。用 step 的话，一根 12 格（0.6 m）的弦可以从一个 0.4 m 高的土包正上方笔直
@@ -99,11 +99,11 @@ const FILL_BASE_CELLS_MAX = 12;
 const FILL_MAX_RISE = 0.1;
 
 /**
- * 可站判定的输入。每次规划前由 `OctoMapPathPlanner` 用当前的设置和小狗参数
- * {@link OctoMapNavSurface.configure} 一次。
+ * 可站判定的输入。每次规划前由 `Octomap3dPcdPathPlanner` 用当前的设置和小狗参数
+ * {@link Octomap3dPcdNavSurface.configure} 一次。
  *
  * `clearanceRadius` 由调用方算好（碰撞半径 **+ 半格安全余量**）再传进来：半格余量
- * 的来历见 `octo-map-path-grid.ts` 里 `CELL_SAFETY` 的注释，那是「格心判据推真实墙
+ * 的来历见 `octomap-3d-pcd-path-grid.ts` 里 `CELL_SAFETY` 的注释，那是「格心判据推真实墙
  * 面距离」的账，属于规划器的口径，不该在这里重算一遍。
  */
 export interface OctoMapNavConfig {
@@ -324,7 +324,7 @@ function fillEmptyColumns(
  *
  * A* 本身不在这里——它属于规划器，这里只出「图」。
  */
-export class OctoMapNavSurface {
+export class Octomap3dPcdNavSurface {
   readonly nx: number;
   readonly nz: number;
   readonly minX: number;
@@ -438,7 +438,7 @@ export class OctoMapNavSurface {
     groundLevel: number,
     fillFromNeighbors = false,
     fillBaseCells: number = DEFAULT_OCTO_MAP_SETTINGS.fillBaseCells,
-  ): OctoMapNavSurface {
+  ): Octomap3dPcdNavSurface {
     const cellCount = nx * nz;
     const counts = new Uint32Array(cellCount);
     let inGrid = 0;
@@ -541,7 +541,7 @@ export class OctoMapNavSurface {
 
     // 裁到实际长度：cap 是按点数估的上界，留着会白占几 MB。列内 run 按 hi 升序
     // （ys 已排好），`forEachNeighbor` 因此可以顺序扫。
-    return new OctoMapNavSurface(
+    return new Octomap3dPcdNavSurface(
       nx, nz, minX, minZ, cell, groundLevel,
       loBuf.slice(0, runCount),
       hiBuf.slice(0, runCount),
@@ -574,7 +574,7 @@ export class OctoMapNavSurface {
     for (let dz = -reach; dz <= reach; dz++) {
       for (let dx = -reach; dx <= reach; dx++) {
         // `<=` 而不是 `<`：判据要与「以格心为心、半径 (r + 安全余量)/cell 的浮点圆盘」
-        // 逐位相同（碰撞半径滑块上的一厘米要真的是一厘米），见 `octo-map-path-grid.ts`
+        // 逐位相同（碰撞半径滑块上的一厘米要真的是一厘米），见 `octomap-3d-pcd-path-grid.ts`
         // 里 `CELL_SAFETY` 的说明。
         if (dx * dx + dz * dz <= r2) {
           dxs.push(dx);
@@ -877,7 +877,7 @@ export class OctoMapNavSurface {
   /**
    * 两端之间能不能**拉一条直线走过去**——小狗的身体沿这根弦扫过去，会不会碰到东西。
    *
-   * 用途是**把锯齿拉直**（见 `OctoMapPathPlanner` 的 `SMOOTH_CHORD_CELLS`）：A* 的
+   * 用途是**把锯齿拉直**（见 `Octomap3dPcdPathPlanner` 的 `SMOOTH_CHORD_CELLS`）：A* 的
    * 边权只跟「走了一步什么方向」有关，跟这些步的**先后**无关，于是所有同样方向组合的
    * 走法代价**严格相等**，折线的形状完全不受代价约束。量出来的样子就是每米 3 个转角、
    * 其中 75% 左右翻号——狗头一直在抖。要修它就得在代价之外再加一条**形状**判据，也就是
@@ -1077,7 +1077,7 @@ export class OctoMapNavSurface {
    *
    * **不复用 `mapPoint` 的两个理由**：一是它在回答「该站到哪个节点上」，跟「有没有面」
    * 是两件事（终点浮在半空时它照样会返回一个地面节点，而那正是问题本身）；二是它的
-   * 签名被 spec 压着不能动。调用方见 `OctoMapPathPlanner.plan` 里 `goalTooHigh` 那段。
+   * 签名被 spec 压着不能动。调用方见 `Octomap3dPcdPathPlanner.plan` 里 `goalTooHigh` 那段。
    */
   columnTop(x: number, z: number): number {
     const cx = Math.floor((x - this.minX) / this.cell);
@@ -1193,7 +1193,7 @@ export class OctoMapNavSurface {
   private get cfg(): OctoMapNavConfig {
     const cfg = this.config;
     if (!cfg) {
-      throw new Error('OctoMapNavSurface 还没 configure 就被查询了');
+      throw new Error('Octomap3dPcdNavSurface 还没 configure 就被查询了');
     }
     return cfg;
   }

@@ -14,8 +14,8 @@ import {
 } from '../octomap-3d-pcd.model';
 import { cloudFloorY } from '../utils/cloud-floor.util';
 import { MAX_VOXEL_COUNT } from '../utils/voxel-sample.util';
-import { OctoMapVoxelGrid } from './octo-map-grid';
-import { OctoMapGlobalController } from './octo-map-global.controller';
+import { Octomap3dPcdVoxelGrid } from './octomap-3d-pcd-grid';
+import { Octomap3dPcdGlobal } from './octomap-3d-pcd-global.controller';
 
 const AUTO_VOXEL_DIVISIONS = 64;
 /**
@@ -64,7 +64,7 @@ interface OctoMapVoxelCell {
  *
  * `centers` 存的是每个实例**原来的**中心（3 个一组）：撤掉预览时要按它放回去，而
  * 实例矩阵在预览期间已经被改过，不能就地反算。`start`/`count` 是它是按哪段点算出来
- * 的——换一段点就要重算（见 {@link OctoMapGrilleController.applyPreview}）。
+ * 的——换一段点就要重算（见 {@link Octomap3dPcdGrille.applyPreview}）。
  */
 interface OctoMapPreviewInstances {
   ids: Int32Array;
@@ -78,7 +78,7 @@ interface OctoMapPreviewInstances {
  * 所有针对“点”的操作都在这里。
  */
 @Injectable()
-export class OctoMapGrilleController {
+export class Octomap3dPcdGrille {
   readonly pointsChanged = new Subject<OctoMapPointsChangedDetail>();
   readonly pointClicked = new Subject<OctoMapPointClickedDetail>();
   readonly paintedChanged = new Subject<OctoMapPaintedVoxels>();
@@ -102,13 +102,13 @@ export class OctoMapGrilleController {
    * 参考物（灰色地面平面、参考网格）锚在哪个世界 Y；还没锚定时为 null。
    *
    * 与 {@link groundLevel} 的差别就是「跟不跟着云走」：那个每次重建都重算，这个是
-   * 锚定那一刻的快照（见 `OctoMapGlobalController.anchorReference`）。由
+   * 锚定那一刻的快照（见 `Octomap3dPcdGlobal.anchorReference`）。由
    * {@link setReferenceLevel} 回填——它得等这个控制器交出包围盒和新地板高度之后才
    * 定得下来，所以比 {@link groundLevel} 晚一步。
    */
   referenceLevel: number | null = null;
   /** 常驻体素结构——导航/障碍空间。点云模式下为 null。 */
-  grid: OctoMapVoxelGrid | null = null;
+  grid: Octomap3dPcdVoxelGrid | null = null;
   /** 原始交错的 XYZ 坐标，保留用于精细分辨率导航。 */
   positions: Float32Array | null = null;
   /**
@@ -156,7 +156,7 @@ export class OctoMapGrilleController {
   private readonly raycaster = new THREE.Raycaster();
   private readonly pointer = new THREE.Vector2();
 
-  constructor(private readonly global: OctoMapGlobalController) {}
+  constructor(private readonly global: Octomap3dPcdGlobal) {}
 
   rebuild(points: OctoMapPointCloud | null, options: OctoMapRenderOptions, fit: boolean): void {
     this.dispose();
@@ -302,7 +302,7 @@ export class OctoMapGrilleController {
       const ix = Math.floor((positions[p] - min[0]) / voxelSize);
       const iy = Math.floor((positions[p + 1] - min[1]) / voxelSize);
       const iz = Math.floor((positions[p + 2] - min[2]) / voxelSize);
-      const instanceId = grid.instanceId(OctoMapVoxelGrid.key(ix, iy, iz));
+      const instanceId = grid.instanceId(Octomap3dPcdVoxelGrid.key(ix, iy, iz));
       if (instanceId === undefined || seen.has(instanceId)) {
         continue;
       }
@@ -439,7 +439,7 @@ export class OctoMapGrilleController {
           if (dx * dx + dy * dy + dz * dz > r * r) {
             continue;
           }
-          const key = OctoMapVoxelGrid.key(ix + dx, iy + dy, iz + dz);
+          const key = Octomap3dPcdVoxelGrid.key(ix + dx, iy + dy, iz + dz);
           if (!this.grid.has(key)) {
             continue;
           }
@@ -491,7 +491,7 @@ export class OctoMapGrilleController {
           if (dx * dx + dy * dy + dz * dz > r * r) {
             continue;
           }
-          const key = OctoMapVoxelGrid.key(ix + dx, iy + dy, iz + dz);
+          const key = Octomap3dPcdVoxelGrid.key(ix + dx, iy + dy, iz + dz);
           if (!this.grid.has(key)) {
             continue;
           }
@@ -566,7 +566,7 @@ export class OctoMapGrilleController {
       return;
     }
     const { ix, iy, iz } = this.grid.worldToVoxel(world[0], world[1], world[2]);
-    const key = OctoMapVoxelGrid.key(ix, iy, iz);
+    const key = Octomap3dPcdVoxelGrid.key(ix, iy, iz);
     if (this.grid.has(key)) {
       return;
     }
@@ -598,7 +598,7 @@ export class OctoMapGrilleController {
       return;
     }
     const { ix, iy, iz } = this.grid.worldToVoxel(world[0], world[1], world[2]);
-    const newKey = OctoMapVoxelGrid.key(ix, iy, iz);
+    const newKey = Octomap3dPcdVoxelGrid.key(ix, iy, iz);
     if (newKey === key) {
       return;
     }
@@ -734,7 +734,7 @@ export class OctoMapGrilleController {
     }
     const vs = this.grid.voxelSize;
     const { ix, iy, iz } = this.grid.worldToVoxel(world[0], world[1], world[2]);
-    const center = this.grid.center(OctoMapVoxelGrid.key(ix, iy, iz));
+    const center = this.grid.center(Octomap3dPcdVoxelGrid.key(ix, iy, iz));
 
     if (!this.previewMesh) {
       const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -890,7 +890,7 @@ export class OctoMapGrilleController {
    *
    * Y 取的是**点云自己的地板**（{@link groundLevel}）而不是平面那一片的高度：平面
    * 是钉在锚点上的参考物，把云整体抬高/降低之后它不会跟着走（见
-   * `OctoMapGlobalController.anchorReference`），而放狗要落在云上、不是落在那块
+   * `Octomap3dPcdGlobal.anchorReference`），而放狗要落在云上、不是落在那块
    * 参考面上。两者平时就是同一个高度（平面当初就贴在地板上），只有平移过之后才
    * 分得开。
    */
@@ -1162,7 +1162,7 @@ export class OctoMapGrilleController {
 
     // 构建常驻网格，当网格的分辨率与原点不变时（例如仅颜色变化），
     // 沿用原有的禁行单元。
-    const grid = new OctoMapVoxelGrid(min, voxelSize);
+    const grid = new Octomap3dPcdVoxelGrid(min, voxelSize);
     for (const key of this.carryForbidden(voxelSize, min)) {
       grid.forbidden.add(key);
     }
@@ -1187,7 +1187,7 @@ export class OctoMapGrilleController {
       );
       mesh.setMatrixAt(index, matrix);
 
-      const key = OctoMapVoxelGrid.key(cell.ix, cell.iy, cell.iz);
+      const key = Octomap3dPcdVoxelGrid.key(cell.ix, cell.iy, cell.iz);
       const base: [number, number, number] = colors
         ? [cell.r / cell.n, cell.g / cell.n, cell.b / cell.n]
         : [fallback.r, fallback.g, fallback.b];
@@ -1229,7 +1229,7 @@ export class OctoMapGrilleController {
       const ix = Math.floor((positions[i] - min[0]) / voxelSize);
       const iy = Math.floor((positions[i + 1] - min[1]) / voxelSize);
       const iz = Math.floor((positions[i + 2] - min[2]) / voxelSize);
-      const key = OctoMapVoxelGrid.key(ix, iy, iz);
+      const key = Octomap3dPcdVoxelGrid.key(ix, iy, iz);
       let cell = cells.get(key);
       if (!cell) {
         cell = { ix, iy, iz, r: 0, g: 0, b: 0, n: 0 };
@@ -1303,7 +1303,7 @@ export class OctoMapGrilleController {
     if (!this.grid || !this.positions) {
       return;
     }
-    const { ix, iy, iz } = OctoMapVoxelGrid.parse(key);
+    const { ix, iy, iz } = Octomap3dPcdVoxelGrid.parse(key);
     const min = this.grid.min;
     const vs = this.grid.voxelSize;
     const x0 = min[0] + ix * vs;
@@ -1462,7 +1462,7 @@ export class OctoMapGrilleController {
   }
 
   /**
-   * 回填参考物的锚高（由 `OctoMapController.rebuild` 在锚定之后调用）。
+   * 回填参考物的锚高（由 `Octomap3dPcd.rebuild` 在锚定之后调用）。
    *
    * 变了就**再发一次** `pointsChanged`：锚点要等这个控制器交出包围盒和新地板高度才
    * 定得下来，所以 `rebuild` 里那次 `emitPointsChanged` 带的还是上一轮的值（或

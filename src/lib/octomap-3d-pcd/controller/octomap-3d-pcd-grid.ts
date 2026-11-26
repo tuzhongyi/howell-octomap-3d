@@ -13,7 +13,7 @@ export interface OctoMapGridCoord {
  * 单元用紧凑的 `${ix},${iy},${iz}` 键寻址；单元的世界
  * 坐标位置由{@link min} + {@link voxelSize} 推导。
  */
-export class OctoMapVoxelGrid {
+export class Octomap3dPcdVoxelGrid {
   /** 网格最小角的世界坐标位置（与点云边界一致）。 */
   readonly min: [number, number, number];
   /** 一个体素的边长（世界单位）。 */
@@ -46,7 +46,7 @@ export class OctoMapVoxelGrid {
     instanceId: number,
     baseColor: [number, number, number],
   ): void {
-    const key = OctoMapVoxelGrid.key(ix, iy, iz);
+    const key = Octomap3dPcdVoxelGrid.key(ix, iy, iz);
     this.cells.set(key, instanceId);
     this.byInstance.set(instanceId, key);
     this.baseColors.set(key, baseColor);
@@ -54,7 +54,7 @@ export class OctoMapVoxelGrid {
 
   /** 添加一个单元（已存在时不做任何事），返回其键。 */
   addCell(ix: number, iy: number, iz: number, baseColor: [number, number, number]): string {
-    const key = OctoMapVoxelGrid.key(ix, iy, iz);
+    const key = Octomap3dPcdVoxelGrid.key(ix, iy, iz);
     if (this.cells.has(key)) {
       return key;
     }
@@ -117,7 +117,7 @@ export class OctoMapVoxelGrid {
 
   /** 单元的世界坐标中心。 */
   center(key: string): [number, number, number] {
-    const { ix, iy, iz } = OctoMapVoxelGrid.parse(key);
+    const { ix, iy, iz } = Octomap3dPcdVoxelGrid.parse(key);
     return [
       this.min[0] + (ix + 0.5) * this.voxelSize,
       this.min[1] + (iy + 0.5) * this.voxelSize,
@@ -138,7 +138,7 @@ export class OctoMapVoxelGrid {
             if (Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz)) !== r) {
               continue;
             }
-            const key = OctoMapVoxelGrid.key(ix + dx, iy + dy, iz + dz);
+            const key = Octomap3dPcdVoxelGrid.key(ix + dx, iy + dy, iz + dz);
             if (this.cells.has(key)) {
               return key;
             }
@@ -151,7 +151,7 @@ export class OctoMapVoxelGrid {
 
   /** 一个单元的 26 邻接占用邻居。 */
   neighbors(key: string): string[] {
-    const { ix, iy, iz } = OctoMapVoxelGrid.parse(key);
+    const { ix, iy, iz } = Octomap3dPcdVoxelGrid.parse(key);
     const result: string[] = [];
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
@@ -159,7 +159,7 @@ export class OctoMapVoxelGrid {
           if (dx === 0 && dy === 0 && dz === 0) {
             continue;
           }
-          const neighbor = OctoMapVoxelGrid.key(ix + dx, iy + dy, iz + dz);
+          const neighbor = Octomap3dPcdVoxelGrid.key(ix + dx, iy + dy, iz + dz);
           if (this.cells.has(neighbor)) {
             result.push(neighbor);
           }

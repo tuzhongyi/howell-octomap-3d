@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { OctoMapBoundingBox, OctoMapGizmoMode, OctoMapSelectionBox } from '../octomap-3d-pcd.model';
-import { OctoMapGroundExtent, groundPlaneRect } from './octo-map-ground-plane';
+import { OctoMapGroundExtent, groundPlaneRect } from './octomap-3d-pcd-ground-plane';
 
 /**
  * 平移手柄的吸附步长（米）：1 cm。
@@ -43,7 +43,7 @@ function eulerDegreesOf(q: THREE.Quaternion): [number, number, number] {
  * 以及渲染循环和尺寸变化处理。所有“场景级”的东西都在这里。
  */
 @Injectable()
-export class OctoMapGlobalController {
+export class Octomap3dPcdGlobal {
   scene!: THREE.Scene;
   camera!: THREE.PerspectiveCamera;
   renderer!: THREE.WebGLRenderer;

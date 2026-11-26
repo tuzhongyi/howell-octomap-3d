@@ -4,24 +4,24 @@ import {
   OctoMapPointCloud,
   OctoMapProjectionSource,
 } from '../octomap-3d-pcd.model';
-import { OctoMapDogController } from './octo-map-dog.controller';
-import { OctoMapGlobalController } from './octo-map-global.controller';
-import { OctoMapGroundExtent } from './octo-map-ground-plane';
-import { OctoMapPathController } from './octo-map-path.controller';
-import { OctoMapGrilleController, OctoMapRenderOptions } from './octo-map-point.controller';
+import { Octomap3dPcdDog } from './octomap-3d-pcd-dog.controller';
+import { Octomap3dPcdGlobal } from './octomap-3d-pcd-global.controller';
+import { OctoMapGroundExtent } from './octomap-3d-pcd-ground-plane';
+import { Octomap3dPcdPath } from './octomap-3d-pcd-path.controller';
+import { Octomap3dPcdGrille, OctoMapRenderOptions } from './octomap-3d-pcd-point.controller';
 
 /**
- * 将场景级（{@link OctoMapGlobalController}）、点相关（{@link OctoMapGrilleController}）、
- * 导航（{@link OctoMapPathController}）和小狗（{@link OctoMapDogController}）
+ * 将场景级（{@link Octomap3dPcdGlobal}）、点相关（{@link Octomap3dPcdGrille}）、
+ * 导航（{@link Octomap3dPcdPath}）和小狗（{@link Octomap3dPcdDog}）
  * 控制器串联成一个门面，使组件只需调用这里，而不必自己把它们接在一起。
  */
 @Injectable()
-export class OctoMapController {
+export class Octomap3dPcd {
   constructor(
-    public readonly grille: OctoMapGrilleController,
-    public readonly global: OctoMapGlobalController,
-    public readonly dog: OctoMapDogController,
-    public readonly path: OctoMapPathController,
+    public readonly grille: Octomap3dPcdGrille,
+    public readonly global: Octomap3dPcdGlobal,
+    public readonly dog: Octomap3dPcdDog,
+    public readonly path: Octomap3dPcdPath,
   ) {}
 
   /**
@@ -72,7 +72,7 @@ export class OctoMapController {
 
   /**
    * 在体素中心周围刷上障碍。返回值原样来自
-   * {@link OctoMapPointController.brushAt}——`occupied === 0` 就是「这一带没有点」，
+   * {@link Octomap3dPcdPoint.brushAt}——`occupied === 0` 就是「这一带没有点」，
    * 调用方拿它决定要不要提示（见 `OctoMapBrushMissDetail`）。
    */
   brush(
@@ -191,7 +191,7 @@ export class OctoMapController {
     if (!points || points.length < 2) {
       this.dog.stop();
       // 报哪个原因由规划器自己定（尺寸超限 > 小狗下不来 > 终点浮空 > 终点够不着 >
-      // 搜不到，见 `OctoMapPathController.failedReason`）：那四个字段都在它手上，
+      // 搜不到，见 `Octomap3dPcdPath.failedReason`）：那四个字段都在它手上，
       // 这里只有一句话和一条折线。
       this.logPlan(start, goal, null, this.failureText(), params);
       this.path.noPath(this.path.failedReason(), null);
@@ -211,7 +211,7 @@ export class OctoMapController {
     // 立面上的原始命中点）：那时路径末端本来就该落在终点脚下的那个面上，竖直那一
     // 维归上面那条「落差」判据管——量三维会把「点墙面」这个常见手势一律判失败。
     // 两个分支与规划器里 `goalTooHigh` 那两条判据同源，见
-    // `OctoMapPathPlanner` 的 `goalOnFace`。
+    // `Octomap3dPcdPathPlanner` 的 `goalOnFace`。
     const end = points[points.length - 1];
     const distance = this.path.goalOnFace
       ? Math.hypot(end[0] - goal[0], end[2] - goal[2])
@@ -311,7 +311,7 @@ export class OctoMapController {
    *
    * 界面上那几句文案在 `SystemManagerComponent` 里（要带操作建议，是给用户看的）；
    * 这里只求排查时一眼认得，所以短。数从
-   * {@link OctoMapPathController.heightGap} 现取——它紧跟着 `computePath` 才有效。
+   * {@link Octomap3dPcdPath.heightGap} 现取——它紧跟着 `computePath` 才有效。
    */
   private failureText(): string {
     const gap = this.path.heightGap ?? 0;
@@ -402,10 +402,10 @@ export class OctoMapController {
   }
 }
 
-export const OctoMapControllerProviders = [
-  OctoMapGrilleController,
-  OctoMapGlobalController,
-  OctoMapDogController,
-  OctoMapPathController,
-  OctoMapController,
+export const Octomap3dPcdProviders = [
+  Octomap3dPcdGrille,
+  Octomap3dPcdGlobal,
+  Octomap3dPcdDog,
+  Octomap3dPcdPath,
+  Octomap3dPcd,
 ];

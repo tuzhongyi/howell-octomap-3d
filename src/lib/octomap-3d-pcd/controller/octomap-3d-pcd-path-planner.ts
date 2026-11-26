@@ -1,7 +1,7 @@
 import { OctoMapBoundingBox, OctoMapPathAlgorithm } from '../octomap-3d-pcd.model';
-import { OctoMapVoxelGrid } from './octo-map-grid';
-import { OctoMapNavSurface } from './octo-map-nav-surface';
-import { CELL_SAFETY } from './octo-map-path-grid';
+import { Octomap3dPcdVoxelGrid } from './octomap-3d-pcd-grid';
+import { Octomap3dPcdNavSurface } from './octomap-3d-pcd-nav-surface';
+import { CELL_SAFETY } from './octomap-3d-pcd-path-grid';
 
 /** A* 开放集合使用的最小二叉堆。 */
 class MinHeap<T> {
@@ -68,12 +68,12 @@ class MinHeap<T> {
 export const MIN_STEP_HEIGHT = 0.01;
 
 /**
- * 一条**跨越边**（格距 ≥ 2 格，见 `OctoMapNavSurface` 的 `crossWidth`）的额外代价，
+ * 一条**跨越边**（格距 ≥ 2 格，见 `Octomap3dPcdNavSurface` 的 `crossWidth`）的额外代价，
  * 单位是格。
  *
  * 不加这一项，A* 对「走过去」和「跳过去」是**无所谓**的：边权是格心之间的水平距离，
  * 一次 3 格的跨越和三次 1 格的迈步都是 3。而跨越那一段只按墙规则采样（见
- * `OctoMapNavSurface.crossClear`），**不做**脚印判定，比走更松——于是泛化成本一样、
+ * `Octomap3dPcdNavSurface.crossClear`），**不做**脚印判定，比走更松——于是泛化成本一样、
  * 约束更少的那个，A* 会挑它。真图上量过：默认 0.125 m 时 60 组配对里 57 组的折线
  * 都含跨格步，整条路是连跳带蹦，而不是「绕着走、遇上坑才迈一步」。
  *
@@ -114,7 +114,7 @@ const VERTICAL_COST = 1;
  * 平滑的做法是「从当前顶点尽量往前跳，跳到跳不过去为止」——这一步能跳多远，决定了
  * 锯齿能被拉直到什么程度。取 12 格（0.6 m）与 `MAX_CROSS_CELLS` 同量级：弦越长，
  * 越能一次跨掉好几个锯齿周期；但一根长弦也是「AI 在图上抄近路」，它只受
- * {@link OctoMapNavSurface.segmentClear} 约束，所以别往长了放。
+ * {@link Octomap3dPcdNavSurface.segmentClear} 约束，所以别往长了放。
  *
  * 量过的锯齿尺度是 1 格幅、几个格一个周期（`q:\tmp\path-jitter.mjs`：每米 3 个转角，
  * 转角的 75% 是左右翻号的），12 格足够跨掉它。
@@ -134,13 +134,13 @@ const SURFACE_MIN_CELLS = 9;
  * 一次规划请求：跑 `plan()` 要的全部输入。
  *
  * 网格尺寸（`nx` / `nz` / `minX` / `minZ`）由**调用方**算好传进来，规划器不自己调
- * `navGridSize`。两个理由：调用方（`OctoMapPathController.computePath`）为了判
+ * `navGridSize`。两个理由：调用方（`Octomap3dPcdPath.computePath`）为了判
  * 「会不会超限」本来就得先算一次，再算一遍是白花；更要紧的是**两边必须逐位相同**，
  * 而传进来就只有一份，不存在两处推导出不同结果的可能。
  */
 export interface OctoMapPathRequest {
-  /** 体素网格，只用来读刷过的禁行列（见 {@link OctoMapPathPlanner.bannedColumns}）。 */
-  grid: OctoMapVoxelGrid;
+  /** 体素网格，只用来读刷过的禁行列（见 {@link Octomap3dPcdPathPlanner.bannedColumns}）。 */
+  grid: Octomap3dPcdVoxelGrid;
   positions: Float32Array | null;
   /** 点云包围盒；`groundExtendsOutside` 为 false 时用来封住扫描之外的地面。 */
   bbox: OctoMapBoundingBox;
@@ -155,7 +155,7 @@ export interface OctoMapPathRequest {
    *
    * 它是**建图参数**，所以只有 `'cloudFit'` 那条算法读它（`'surfaceGraph'` 根本不填）；
    * 与 `maxStepHeight` / `crossWidth` 那些 `configure` 期的参数不同，它在
-   * {@link OctoMapNavSurface.build} 里就要用上——也因此必须进
+   * {@link Octomap3dPcdNavSurface.build} 里就要用上——也因此必须进
    * {@link navSurface} 的缓存键，否则用户在面板上拖这根滑杆、再点「找路径」，读到的
    * 还是那张按旧窗口建好的图。
    */
@@ -177,7 +177,7 @@ export interface OctoMapPathRequest {
  *
  * 五个字段**永远都在**，不管成没成：折线可以是 null，但 `heightGap` / `dogStuck` /
  * `goalTooHigh` / `goalOnFace` 的取值必须每一次都完整交付。调用方
- * （`OctoMapPathController`）照着无条件抄回自己的字段——只在「有折线」时抄的话，
+ * （`Octomap3dPcdPath`）照着无条件抄回自己的字段——只在「有折线」时抄的话，
  * 上一次的落差会活到下一次，`failedReason()` 就会拿一个不相干的旧值给这次失败报
  * `'gap'`。
  */
@@ -186,10 +186,10 @@ export interface OctoMapPathPlan {
   points: [number, number, number][] | null;
   /**
    * 「终点够不着」「小狗下不来」「吸附替终点丢了高度」这三件事的程度，
-   * 见 `OctoMapPathController.heightGap` 与 `OctoMapPathFailureReason` 的 `goalTooHigh`。
+   * 见 `Octomap3dPcdPath.heightGap` 与 `OctoMapPathFailureReason` 的 `goalTooHigh`。
    */
   heightGap: number | null;
-  /** 卡住的是小狗自己吗，见 `OctoMapPathController.dogStuck`。 */
+  /** 卡住的是小狗自己吗，见 `Octomap3dPcdPath.dogStuck`。 */
   dogStuck: boolean;
   /** 终点浮在它那一列所有面之上吗，见 `OctoMapPathFailureReason` 的 `goalTooHigh`。 */
   goalTooHigh: boolean;
@@ -198,7 +198,7 @@ export interface OctoMapPathPlan {
    * `mapPoint` 第 1 段认「点到的那个面」同一条）。
    *
    * 它就是下面 `goalTooHigh` 判据第 1 条的**取反**，量一次记在两处：规划器自己拿它
-   * 决定要不要报 `goalTooHigh`；`OctoMapController.findPath` 拿它决定接受范围量几维
+   * 决定要不要报 `goalTooHigh`；`Octomap3dPcd.findPath` 拿它决定接受范围量几维
    * ——没有面接着终点时量**三维**，有面接着时只量水平（终点在竖直面上时路径末端
    * 本来就该落在它脚下的地面，竖直那一维归落差判据管，见那个方法的注释）。
    */
@@ -231,11 +231,11 @@ export function emptyPlan(): OctoMapPathPlan {
  * 连同表面缓存一起被绕开，没有任何代价。
  *
  * 它是**纯类**：不碰 THREE、不碰 DOM、不是 `@Injectable`。构造它不需要 DI，测试
- * 里直接 `new` 就能跑，和 `OctoMapVoxelGrid` / `OctoMapNavSurface` 一个路子。
+ * 里直接 `new` 就能跑，和 `Octomap3dPcdVoxelGrid` / `Octomap3dPcdNavSurface` 一个路子。
  */
-export abstract class OctoMapPathPlanner {
+export abstract class Octomap3dPcdPathPlanner {
   /** 上一次建的表面图，键见 {@link navSurface}。 */
-  private surface: OctoMapNavSurface | null = null;
+  private surface: Octomap3dPcdNavSurface | null = null;
   private surfaceKey: {
     positions: Float32Array | null;
     nx: number;
@@ -258,7 +258,7 @@ export abstract class OctoMapPathPlanner {
   /**
    * 按本算法的路子建一张表面图。子类**唯一**要实现的钩子。
    *
-   * 入参与的 `OctoMapNavSurface.build` 一致；{@link navSurface} 负责缓存，所以这里
+   * 入参与的 `Octomap3dPcdNavSurface.build` 一致；{@link navSurface} 负责缓存，所以这里
    * 每次被调用都该真的建一张新的。
    */
   protected abstract buildSurface(
@@ -270,7 +270,7 @@ export abstract class OctoMapPathPlanner {
     cell: number,
     groundLevel: number,
     fillBaseCells: number,
-  ): OctoMapNavSurface;
+  ): Octomap3dPcdNavSurface;
 
   /**
    * 「小狗这一坨整个悬在地面之上」的判据里，`lowest` 允许比 `groundLevel` 高出多少。
@@ -281,7 +281,7 @@ export abstract class OctoMapPathPlanner {
    * 也判成悬空。
    *
    * `'cloudFit'` 必须覆盖它：填充过的空列读的是**局部**地板高度，上面那条等价关系就
-   * 断了（见 {@link OctoMapPathCloudFitController.islandFloatMargin}）。
+   * 断了（见 {@link Octomap3dPcdPathCloudFit.islandFloatMargin}）。
    */
   protected islandFloatMargin(cell: number, _step: number): number {
     return cell;
@@ -291,7 +291,7 @@ export abstract class OctoMapPathPlanner {
    * 规划一条从 `start` 到 `goal`（世界坐标）的路线，避开所有占用的体素。
    *
    * 步骤是：建表面图 → 起终点各吸附到一个能站的节点 → 在节点图上 A* → 落回世界
-   * 坐标 → 拉直。前两步和第三步都在 `OctoMapNavSurface` 里，落回坐标与拉直在这里。
+   * 坐标 → 拉直。前两步和第三步都在 `Octomap3dPcdNavSurface` 里，落回坐标与拉直在这里。
    *
    * 这里**什么都不记在实例上**（除了表面图缓存）：结果整份返回，由调用方决定怎么
    * 用它。所以同一个规划器可以被连着调、被两个不同的起点终点交叉调，互不干扰。
@@ -431,7 +431,7 @@ export abstract class OctoMapPathPlanner {
       } else if (
         lowest > req.groundLevel + this.islandFloatMargin(cell, step) &&
         // 还得**确认真的是小狗站在那儿**：搜索是从碰撞体前方的探测点起算的（见
-        // `OctoMapController.findPath` 里的 frontPosition），它可能落在小狗旁边的一级
+        // `Octomap3dPcd.findPath` 里的 frontPosition），它可能落在小狗旁边的一级
         // 台沿上——小狗自己站在地板上，探测点却在 0.52 m 的坎上。那时按这个探测点报
         // 「小狗站在离地 0.52 m 的地方」是在说一件用户看不见的事，而原来的「差 X m」
         // 才是对的（量过：真图上就有两条这样的行，两种口径差 0.48 m）。
@@ -449,7 +449,7 @@ export abstract class OctoMapPathPlanner {
         // 报的是**小狗自己离地多高**（`start[1]`，用户眼睛看到的那个高度），不是终点与
         // 哪个面的差：这种情形里两头齐平，差出来接近 0，说了等于没说。而这个数是「它在
         // 多高的地方下不来」，**不是**滑杆该拖到的位置——真图上量过（见
-        // `OctoMapPathController.dogStuck`）：要 0.69~0.77 m 才通，小狗离地却只有
+        // `Octomap3dPcdPath.dogStuck`）：要 0.69~0.77 m 才通，小狗离地却只有
         // 0.50~0.71 m，照着这个数拖滑杆大多还是不通；把它挪到 0.6 m 内的地面上则 8/8
         // 都通。所以这个数只作说明，提示里给的建议是挪狗。
         //
@@ -494,14 +494,14 @@ export abstract class OctoMapPathPlanner {
    * 代价函数修不了它：补一条「转弯要加钱」的边权需要 (节点 × 来向) 的搜索状态，而这条
    * 折线是要**给小狗走路**的（狗按每一段定朝向），所以锯齿在观感上就是狗头在抖。改为在
    * **输出之后**加一道形状判据：直线扫过去不碰东西，就把那一段锯齿整段删掉。跳过的每个
-   * 顶点仍然用它后面的邻点保证过——{@link OctoMapNavSurface.segmentClear} 就是那条判据。
+   * 顶点仍然用它后面的邻点保证过——{@link Octomap3dPcdNavSurface.segmentClear} 就是那条判据。
    *
    * 保留的第一个点是 A* 的起点（小狗身前那个探测点），最后一个点是终点；中间的锯齿都是
    * 等价的走法，换掉不影响「这条路能不能走」。**代价也不再是最优的那条**：拉直只会让
    * 折线变短（省掉的都是绕出来的长度），所以它不会比 A* 的结果更长。
    */
   private smoothPath(
-    surface: OctoMapNavSurface,
+    surface: Octomap3dPcdNavSurface,
     points: [number, number, number][],
   ): [number, number, number][] {
     if (points.length <= 2) {
@@ -550,7 +550,7 @@ export abstract class OctoMapPathPlanner {
    * 高度差量的是**与种子节点**的差（不是逐跳累加），和验证脚本里认「一块表面」的口径
    * 一致：逐跳累加会顺着斜坡一路漂出去，把半个房间算成一片面。
    */
-  private onSurface(surface: OctoMapNavSurface, node: number): boolean {
+  private onSurface(surface: Octomap3dPcdNavSurface, node: number): boolean {
     const band = surface.hi[node];
     const seen = new Set<number>([surface.cellOf[node]]);
     const queue = [node];
@@ -576,12 +576,12 @@ export abstract class OctoMapPathPlanner {
    *
    * `build` 要遍历一遍点云、再逐列排序，是这条链路上最贵的一步；而拖「碰撞半径」、
    * 「通行高度」这些滑块时点云一动没动。缓存键因此取**点云数组的身份**加上网格本身
-   * 的参数：点云换了，`OctoMapController.rebuild()` 会把 `positions` 换成新引用，
+   * 的参数：点云换了，`Octomap3dPcd.rebuild()` 会把 `positions` 换成新引用，
    * 键自然失效；网格随起终点或边距变化（见 `navGridSize`）时格数与原点一变，
    * 也一样失效。
    *
    * 小狗参数（跨越高度、碰撞半径、禁行列…）**不在键里**：它们走
-   * {@link OctoMapNavSurface.configure}，那一步只重算可站判定，比重建便宜得多。
+   * {@link Octomap3dPcdNavSurface.configure}，那一步只重算可站判定，比重建便宜得多。
    *
    * 缓存挂在**实例**上，所以每个算法各持一份：`'surfaceGraph'` 和 `'cloudFit'` 建出来
    * 的表面图本来就不同，键里不需要再放算法名。代价是同时用过两种算法时两份都常驻
@@ -596,7 +596,7 @@ export abstract class OctoMapPathPlanner {
     cell: number,
     groundLevel: number,
     fillBaseCells: number,
-  ): OctoMapNavSurface {
+  ): Octomap3dPcdNavSurface {
     const key = this.surfaceKey;
     const cached = this.surface;
     if (
@@ -639,10 +639,10 @@ export abstract class OctoMapPathPlanner {
    * 体素的高度。
    *
    * 直接遍历 `grid.forbidden` 而不是遍历全部体素再筛：它是 `cells` 的子集（见
-   * `OctoMapVoxelGrid.remove`），刷满场时两者一样，没刷过时这个是零成本。
+   * `Octomap3dPcdVoxelGrid.remove`），刷满场时两者一样，没刷过时这个是零成本。
    */
   private bannedColumns(
-    grid: OctoMapVoxelGrid,
+    grid: Octomap3dPcdVoxelGrid,
     nx: number,
     nz: number,
     minX: number,
@@ -682,7 +682,7 @@ export abstract class OctoMapPathPlanner {
    * 有没有生效，而 `plan()` 的输出已经被平滑抹过了）。
    */
   astarNodes(
-    surface: OctoMapNavSurface,
+    surface: Octomap3dPcdNavSurface,
     startNode: number,
     goalNode: number,
   ): number[] | null {
@@ -776,7 +776,7 @@ export abstract class OctoMapPathPlanner {
    * （`visited` 挡着），不必让引擎反复扩容。
    */
   private nearestReachableNode(
-    surface: OctoMapNavSurface,
+    surface: Octomap3dPcdNavSurface,
     startNode: number,
     goalX: number,
     goalZ: number,

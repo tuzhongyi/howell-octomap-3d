@@ -5,7 +5,7 @@ import { OctoMapPointCloud } from '../octomap-3d-pcd.model';
  * 上限各自漂移：抽稀结果超过它，查看器同样会拒绝。
  *
  * 查看器自己遇到超限不再直接报错：它把格边长翻倍重试，直到落进这个数以内
- * （见 `octo-map-point.controller.ts` 的 `buildVoxels`），并在工具栏说明实际用了哪一档。
+ * （见 `octomap-3d-pcd-point.controller.ts` 的 `buildVoxels`），并在工具栏说明实际用了哪一档。
  */
 export const MAX_VOXEL_COUNT = 2_000_000;
 

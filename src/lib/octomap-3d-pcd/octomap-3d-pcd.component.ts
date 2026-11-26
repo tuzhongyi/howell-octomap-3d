@@ -15,9 +15,9 @@ import {
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OctoMapGroundExtent } from './controller/octo-map-ground-plane';
-import { OctoMapRenderOptions } from './controller/octo-map-point.controller';
-import { OctoMapController, OctoMapControllerProviders } from './controller/octo-map.controller';
+import { OctoMapGroundExtent } from './controller/octomap-3d-pcd-ground-plane';
+import { OctoMapRenderOptions } from './controller/octomap-3d-pcd-point.controller';
+import { Octomap3dPcd, Octomap3dPcdProviders } from './controller/octomap-3d-pcd.controller';
 import {
   DEFAULT_OCTO_MAP_SETTINGS,
   OctoMapBrushMissDetail,
@@ -75,10 +75,10 @@ function isSameHover(a: OctoMapHoverInfo | null, b: OctoMapHoverInfo | null): bo
   imports: [],
   templateUrl: './octomap-3d-pcd.component.html',
   styleUrl: './octomap-3d-pcd.component.less',
-  providers: [...OctoMapControllerProviders],
+  providers: [...Octomap3dPcdProviders],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OctoMapComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('viewport', { static: true })
   private readonly viewportRef!: ElementRef<HTMLDivElement>;
 
@@ -91,7 +91,7 @@ export class OctoMapComponent implements AfterViewInit, OnChanges, OnDestroy {
    *
    * 多份点云拼成了一份渲染对象（手柄只该动其中一份），整份对象一挪会把别的云也
    * 带走，所以这里只动选中那一份：体素模式改写它占的那些实例矩阵，点云模式重画一份
-   * 世界。与普通的 `points` 换新**刻意不同**：不走 {@link OctoMapController.rebuild}，
+   * 世界。与普通的 `points` 换新**刻意不同**：不走 {@link Octomap3dPcd.rebuild}，
    * 于是包围盒、地板高度、网格与地面、导航边界、手柄位姿都不动——拖动过程中世界并没有
    * 真的改变，那些跟着跳只会让参考物失去参照。
    *
@@ -467,7 +467,7 @@ export class OctoMapComponent implements AfterViewInit, OnChanges, OnDestroy {
    */
   protected readonly hover = signal<OctoMapHoverInfo | null>(null);
 
-  private readonly controller = inject(OctoMapController);
+  private readonly controller = inject(Octomap3dPcd);
   private readonly subscriptions: Subscription[] = [];
   /** 已排队的悬停探测帧；0 = 没有排队。 */
   private hoverFrame = 0;
@@ -501,7 +501,7 @@ export class OctoMapComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.dragStartX = event.clientX;
     this.dragStartY = event.clientY;
     // 平移手柄优先。TransformControls 的 pointerdown 比这里先注册（见
-    // `OctoMapGlobalController.createMoveGizmo`），命中手柄时它已经把 `dragging`
+    // `Octomap3dPcdGlobal.createMoveGizmo`），命中手柄时它已经把 `dragging`
     // 置真——这一下得整让出去，否则按住箭头的同时还会去刷笔、抓狗或拾取。
     if (this.controller.global.gizmoDragging) {
       this.gizmoPressed = true;
@@ -589,7 +589,7 @@ export class OctoMapComponent implements AfterViewInit, OnChanges, OnDestroy {
    * 排一次悬停探测（每帧最多一次）。
    *
    * 跟着 pointermove 直接拾取会把帧率拖垮：点云模式下一次射线拾取要遍历上百万个
-   * 点（见 `OctoMapGrilleController.probe`），而 pointermove 一帧能来十几个。攒到
+   * 点（见 `Octomap3dPcdGrille.probe`），而 pointermove 一帧能来十几个。攒到
    * 下一帧统一算，鼠标划得再快也只算一遍。
    */
   private scheduleHover(event: PointerEvent): void {
@@ -817,7 +817,7 @@ export class OctoMapComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.syncGizmo();
     } else if (changes['preview']) {
       // 只改画面，不重建世界：体素模式挪选中那份的实例矩阵，点云模式整份重画
-      // （见 `OctoMapGrilleController.applyPreview`）。包围盒、地板、网格与手柄都不动。
+      // （见 `Octomap3dPcdGrille.applyPreview`）。包围盒、地板、网格与手柄都不动。
       this.controller.grille.applyPreview(
         this.preview,
         this.renderOptions(),

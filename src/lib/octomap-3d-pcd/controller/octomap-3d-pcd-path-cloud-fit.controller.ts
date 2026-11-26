@@ -1,12 +1,12 @@
 import { OctoMapPathAlgorithm } from '../octomap-3d-pcd.model';
-import { OctoMapNavSurface } from './octo-map-nav-surface';
-import { OctoMapPathPlanner } from './octo-map-path-planner';
+import { Octomap3dPcdNavSurface } from './octomap-3d-pcd-nav-surface';
+import { Octomap3dPcdPathPlanner } from './octomap-3d-pcd-path-planner';
 
 /**
  * 第二种寻路：表面图还是同一张，只是**虚拟地面不用常数了**——每个没点的列从切比雪夫
- * 距离最近的、有点的列认领它的面高（见 `OctoMapNavSurface.build` 的 `fillFromNeighbors`）。
+ * 距离最近的、有点的列认领它的面高（见 `Octomap3dPcdNavSurface.build` 的 `fillFromNeighbors`）。
  *
- * 与 {@link OctoMapPathSurfaceGraphController} 的关系是**只差建图这一步**：搜索、平滑、
+ * 与 {@link Octomap3dPcdPathSurfaceGraph} 的关系是**只差建图这一步**：搜索、平滑、
  * 起终点吸附、失败判定全是基类那一份。要不要它取决于用户想量哪件事——`'surfaceGraph'`
  * 答的是「在名义地面上怎么走」，它答的是「**在云点这张面上**怎么走」，于是铲平坑洼、
  * 补全一片云点会直接反映到路线上。
@@ -21,7 +21,7 @@ import { OctoMapPathPlanner } from './octo-map-path-planner';
  *   上移，于是哪些家具开始挡路会变（`q:\tmp` 上量过的那道悬崖，见 nav-wall-band-cliff）。
  *   这是这个算法**想要**的后果，但它意味着路线会与另一档不同，不算回归。
  */
-export class OctoMapPathCloudFitController extends OctoMapPathPlanner {
+export class Octomap3dPcdPathCloudFit extends Octomap3dPcdPathPlanner {
   readonly algorithm: OctoMapPathAlgorithm = 'cloudFit';
 
   /** 与基类的差别只有那个 `true`：打开「空列从邻居取面高」。 */
@@ -34,8 +34,8 @@ export class OctoMapPathCloudFitController extends OctoMapPathPlanner {
     cell: number,
     groundLevel: number,
     fillBaseCells: number,
-  ): OctoMapNavSurface {
-    return OctoMapNavSurface.build(
+  ): Octomap3dPcdNavSurface {
+    return Octomap3dPcdNavSurface.build(
       positions,
       nx,
       nz,

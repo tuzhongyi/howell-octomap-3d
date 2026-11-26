@@ -8,12 +8,12 @@ import {
   OctoMapPathFailedDetail,
   OctoMapPathFailureReason,
 } from '../octomap-3d-pcd.model';
-import { OctoMapVoxelGrid } from './octo-map-grid';
-import { OctoMapGlobalController } from './octo-map-global.controller';
-import { MAX_FREE_CELLS, NAV_CELL_SIZE, navGridSize } from './octo-map-path-grid';
-import { OctoMapPathPlanner } from './octo-map-path-planner';
-import { OctoMapPathCloudFitController } from './octo-map-path-cloud-fit.controller';
-import { OctoMapPathSurfaceGraphController } from './octo-map-path-surface-graph.controller';
+import { Octomap3dPcdVoxelGrid } from './octomap-3d-pcd-grid';
+import { Octomap3dPcdGlobal } from './octomap-3d-pcd-global.controller';
+import { MAX_FREE_CELLS, NAV_CELL_SIZE, navGridSize } from './octomap-3d-pcd-path-grid';
+import { Octomap3dPcdPathPlanner } from './octomap-3d-pcd-path-planner';
+import { Octomap3dPcdPathCloudFit } from './octomap-3d-pcd-path-cloud-fit.controller';
+import { Octomap3dPcdPathSurfaceGraph } from './octomap-3d-pcd-path-surface-graph.controller';
 
 /**
  * 终点锥和路径管相对小狗碰撞足迹的比例。系数取自改动前写死的尺寸与默认足迹
@@ -63,7 +63,7 @@ const NAV_LIMIT_EXCEEDED_COLOR = '#d946ef';
 /**
  * 持有导航终点、渲染出的路径，以及**这一次**规划的失败缘由。
  *
- * 规划本身**不在这里**：真正搜路的是一组 `OctoMapPathPlanner`，按
+ * 规划本身**不在这里**：真正搜路的是一组 `Octomap3dPcdPathPlanner`，按
  * {@link OctoMapMapSettings.pathAlgorithm} 选一个（见 {@link setAlgorithm}）。这个类
  * 是它们的外壳，管三件事：
  *
@@ -78,11 +78,11 @@ const NAV_LIMIT_EXCEEDED_COLOR = '#d946ef';
  * 而搜索、平滑、起终点吸附那一套与它无关、且各自都有一堆量出来的坑，不该跟着复制。
  *
  * 不变的部分是每一步的「站不站得住」判据（「身子那一带不许有几何」，从**脚下的那个
- * 面**起量而不是从地面起量，见 `OctoMapNavSurface.standable`），以及一个旋钮同时管住
+ * 面**起量而不是从地面起量，见 `Octomap3dPcdNavSurface.standable`），以及一个旋钮同时管住
  * 上爬和下跳这件事。
  */
 @Injectable()
-export class OctoMapPathController {
+export class Octomap3dPcdPath {
   /** 发出路径点数量（0 = 未找到，null = 已清除）。 */
   readonly pathChanged = new Subject<number | null>();
 
@@ -100,10 +100,10 @@ export class OctoMapPathController {
 
   /**
    * 终点的接受范围半径。规划器**不用**它——它只决定「算出来的路径算不算成功」，
-   * 由 {@link OctoMapController.findPath} 读取判定，同时也是圆环的画法尺寸。
+   * 由 {@link Octomap3dPcd.findPath} 读取判定，同时也是圆环的画法尺寸。
    * 与 {@link goalPosition} 一样公开只读：改它走 {@link setGoalRadius}。
    *
-   * 初值直接取默认设置，不抄字面量：`OctoMapComponent.ngOnChanges` 在首次绑定
+   * 初值直接取默认设置，不抄字面量：`Octomap3dPcdComponent.ngOnChanges` 在首次绑定
    * 时因为 `viewInitialized` 还是 false 而整个跳过，所以这里**必须**等于默认值，
    * 否则用户没动过这一项时就悄悄用了另一个数。
    */
@@ -115,10 +115,10 @@ export class OctoMapPathController {
    *
    * 和 {@link goalRadius} 一样是**字段**而不是 {@link computePath} 的第 12 个位置参数：
    * 那个签名有「十一个位置参数、一条不增删」的约定（它被 spec 里的 `null as never` 和
-   * `octo-map-path-straight.cases.ts` 依赖着），而这个设置与「这次查询用什么参数」不同，
+   * `octomap-3d-pcd-path-straight.cases.ts` 依赖着），而这个设置与「这次查询用什么参数」不同，
    * 它是「这张表面图怎么建」——建完就缓存在规划器上，不进每次调用的参数表。
    *
-   * 初值直接取默认设置，不抄字面量：`OctoMapComponent.ngOnChanges` 在首次绑定时因为
+   * 初值直接取默认设置，不抄字面量：`Octomap3dPcdComponent.ngOnChanges` 在首次绑定时因为
    * `viewInitialized` 还是 false 而整个跳过，所以这里**必须**等于默认值，否则用户没动过
    * 这一项时就悄悄用了另一个数。
    */
@@ -191,7 +191,7 @@ export class OctoMapPathController {
    * 调用方报 `'gap'` / `'dogStuck'` / `'goalTooHigh'` 里的哪一个——三者的建议不同，
    * 见 {@link failedReason}。
    *
-   * 判据（放在 `OctoMapPathPlanner.plan` 里，只有那儿同时拿得到终点、列顶与跨越高度）
+   * 判据（放在 `Octomap3dPcdPathPlanner.plan` 里，只有那儿同时拿得到终点、列顶与跨越高度）
    * 是两条**与**关系：终点落脚的那个节点比终点低了一次跨越高度还多，**且**终点比那一列
    * 最高的面还高出一格。第二条是防误伤的那一条：点墙面时终点远高于它落到的地面、恒有
    * 第一条成立，但那时列顶（那堵墙）比终点高，第二条不成立——所以这个开关不会把「点墙
@@ -206,13 +206,13 @@ export class OctoMapPathController {
 
   /**
    * 终点**有面接着**吗——它的 Y 落在那一列最高的那个面上（含一格容差）。与
-   * {@link heightGap} 一样每次调用都会重写，由 `OctoMapPathPlanner.plan` 交付。
+   * {@link heightGap} 一样每次调用都会重写，由 `Octomap3dPcdPathPlanner.plan` 交付。
    *
-   * {@link OctoMapController.findPath} 拿它决定**接受范围量几维**：没有面接着终点时
+   * {@link Octomap3dPcd.findPath} 拿它决定**接受范围量几维**：没有面接着终点时
    * 量三维（终点浮在半空，路径末端必须真的走到那个点上，停在正下方不算到），有面接着
    * 时只量水平（点墙面、点桌面这一类命中里，路径末端本来就该落在终点脚下的那个面上，
    * 竖直那一维归落差判据管）。理由详见那个方法，以及
-   * `OctoMapPathPlanner` 里 `goalOnFace` 的注释。
+   * `Octomap3dPcdPathPlanner` 里 `goalOnFace` 的注释。
    *
    * 它同时也是范围指示物的画法依据，见 {@link resizeGoalMarkers}。
    */
@@ -287,9 +287,9 @@ export class OctoMapPathController {
    * （8M 列那档约 13 MB），而同一时刻只有一个在跑。缓存住实例是为了切回旧算法时
    * 不必重建表面图——用户来回对比两条路时，点云一动没动。
    */
-  private readonly planners = new Map<OctoMapPathAlgorithm, OctoMapPathPlanner>();
+  private readonly planners = new Map<OctoMapPathAlgorithm, Octomap3dPcdPathPlanner>();
 
-  constructor(private readonly global: OctoMapGlobalController) {}
+  constructor(private readonly global: Octomap3dPcdGlobal) {}
 
   /**
    * 更新终点锥与路径管的尺寸参考：小狗的碰撞足迹（半径、通行高度）和场景的
@@ -325,7 +325,7 @@ export class OctoMapPathController {
   /**
    * 记住当前点云的范围（以及它贴着的那层地面），据此重画规划上限范围的边界线。
    *
-   * 由 `OctoMapController.rebuild()` 在点云变化后调用，跟 `alignGrid` / 地面平面
+   * 由 `Octomap3dPcd.rebuild()` 在点云变化后调用，跟 `alignGrid` / 地面平面
    * 是同一时机——三者都是「场景换了、参考物跟着换」。
    */
   setBounds(bbox: OctoMapBoundingBox | null, groundLevel: number): void {
@@ -406,7 +406,7 @@ export class OctoMapPathController {
   }
 
   /** 当前算法对应的规划器，按需建、建好留着（见 {@link planners}）。 */
-  private planner(): OctoMapPathPlanner {
+  private planner(): Octomap3dPcdPathPlanner {
     let planner = this.planners.get(this.algorithm);
     if (!planner) {
       planner = createPlanner(this.algorithm);
@@ -508,7 +508,7 @@ export class OctoMapPathController {
    * 设置「填充基准范围」（单位：格）。
    *
    * 只记下来，**不重建表面图**：建图是 `plan()` 里按需做的，而这里正是它的缓存键里
-   * 的一项（见 `OctoMapPathPlanner.navSurface`）——下次点「找路径」时键一对不上就自然
+   * 的一项（见 `Octomap3dPcdPathPlanner.navSurface`）——下次点「找路径」时键一对不上就自然
    * 重建，代价落在真正需要它的那一次调用上，而不是拖滑杆的每一帧上。
    *
    * 参数没变就直接返回：设置面板上任何一项改动都会走到这里。
@@ -562,7 +562,7 @@ export class OctoMapPathController {
    * `distance` 是路径末端到终点的距离，只有 `outOfRange` 有；另外两种压根没算出
    * 路径（或算了也没走到），无从谈起，传 null。落差（`gap`）直接读
    * {@link heightGap}，不从参数过——调用方必须紧接着 `computePath` 调它，否则
-   * 读到的是上一次的落差。眼下的唯一调用方 `OctoMapController.findPath` 就是这个
+   * 读到的是上一次的落差。眼下的唯一调用方 `Octomap3dPcd.findPath` 就是这个
    * 顺序。
    *
    * 两个事件都在这里发，是「我们失败了」的**唯一出口**。顺序有讲究：父组件的
@@ -589,21 +589,21 @@ export class OctoMapPathController {
    * `crossWidth` 是「跨越宽度」（见 {@link OctoMapMapSettings.crossWidth}）：无支撑的
    * 那一段不超过它就允许一步跨过去，0 表示只走相邻格。
    *
-   * `groundLevel` 是扫描出的地板高度，由点云那一侧（`OctoMapGrilleController`）
+   * `groundLevel` 是扫描出的地板高度，由点云那一侧（`Octomap3dPcdGrille`）
    * 算好传进来：地面平面和参考网格用的也是同一个值，路径因此画在可见的地面上，
    * 而不是世界原点那一层。没有点的那一列按它补出来——**这是 `'surfaceGraph'` 的
    * 说法**，别的算法可以拿它当「附近没有源时才用的兜底」（见 `OctoMapPathAlgorithm`）。
    *
    * 签名保持**十一个位置参数**、一条不增删：这个类的构造签名和它一起被 spec 里的
    * `null as never` 依赖着，改成对象会牵动一堆无关分支。真正的请求对象在
-   * {@link OctoMapPathPlanner.plan} 那一层。
+   * {@link Octomap3dPcdPathPlanner.plan} 那一层。
    *
    * 这里只做四件事：算网格参数、判上限、转发给当前算法、把失败标志抄回来。**建表面图
    * 与搜索都在规划器里**（见 {@link planner}）——它们的每一处阈值都是量出来的，而
    * 「小狗走的那张面」是可选的，两者不该搅在一起。
    */
   computePath(
-    grid: OctoMapVoxelGrid,
+    grid: Octomap3dPcdVoxelGrid,
     positions: Float32Array | null,
     bbox: OctoMapBoundingBox,
     start: [number, number, number],
@@ -957,23 +957,23 @@ export class OctoMapPathController {
 
 /**
  * 按算法建规划器。新的寻路方式在**这里**加一支，其余地方一行不动——外壳只认
- * {@link OctoMapPathPlanner} 这个抽象，不认具体是哪一个。
+ * {@link Octomap3dPcdPathPlanner} 这个抽象，不认具体是哪一个。
  *
  * 写成模块级函数而不是外壳的方法：它是构造期的一次分派，跟这个实例的状态无关，
- * 也就没有理由为了它去实例化一个 `OctoMapPathController`。
+ * 也就没有理由为了它去实例化一个 `Octomap3dPcdPath`。
  *
  * `default` 兜底回 `'surfaceGraph'` 而不是抛错：算法名可能来自配置文件
  * （`octomap.config.json`），那里写错一个词不该让寻路整个炸掉——退回默认的那套
  * 至少画得出路。**类型收紧了就该把这支删掉**，让它变成编译错（那时候 `default`
  * 就是死代码，而这里的声音本该由类型系统发）。
  */
-function createPlanner(algorithm: OctoMapPathAlgorithm): OctoMapPathPlanner {
+function createPlanner(algorithm: OctoMapPathAlgorithm): Octomap3dPcdPathPlanner {
   switch (algorithm) {
     case 'surfaceGraph':
-      return new OctoMapPathSurfaceGraphController();
+      return new Octomap3dPcdPathSurfaceGraph();
     case 'cloudFit':
-      return new OctoMapPathCloudFitController();
+      return new Octomap3dPcdPathCloudFit();
     default:
-      return new OctoMapPathSurfaceGraphController();
+      return new Octomap3dPcdPathSurfaceGraph();
   }
 }

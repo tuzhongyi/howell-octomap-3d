@@ -18,8 +18,8 @@ export interface OctoMapGroundExtent {
 /**
  * 包围盒 + 延展设置 → 地面平面的宽/深。
  *
- * 独立成纯函数（而不是 `OctoMapGlobalController` 的方法）的理由和
- * `octo-map-path-grid.ts` 里的 `navGridSize` 一样：那个控制器顶层
+ * 独立成纯函数（而不是 `Octomap3dPcdGlobal` 的方法）的理由和
+ * `octomap-3d-pcd-path-grid.ts` 里的 `navGridSize` 一样：那个控制器顶层
  * `import { OrbitControls } from 'three/addons/...'`，而全仓没有任何 spec import
  * 过那个文件（只有几个控制器 import 它，且都只用在类型位置）——把纯算术留在那里
  * 就等于让一个 THREE addons 依赖来给测试会不会跑起来作答。这里要钉的东西（各轴
@@ -28,7 +28,7 @@ export interface OctoMapGroundExtent {
  * **每轴对称生长**，两边各长 `x` / `z`。
  *
  * `anchor` 是平面**实际**的中心（XZ）。省略时就是包围盒中心，也就是平面永远罩着
- * 点云；给了别的点（参考物钉住不动时，见 `OctoMapGlobalController.anchorReference`），
+ * 点云；给了别的点（参考物钉住不动时，见 `Octomap3dPcdGlobal.anchorReference`），
  * 点云可能已经挪到平面外，那就再按「锚点到包围盒中心」的距离**长出去**——平面不
  * 挪，只是变大。它是放狗、设终点、刷障碍的射线靶面，盖不住就点不着，所以这一步
  * 不能省。锚点恰好在包围盒中心时这一项为 0，与改动前逐个数字相同。

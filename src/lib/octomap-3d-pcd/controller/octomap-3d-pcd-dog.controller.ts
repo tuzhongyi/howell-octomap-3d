@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import * as THREE from 'three';
 import { OctoMapWalkProgress, OctoMapWalkState } from '../octomap-3d-pcd.model';
-import { OctoMapGlobalController } from './octo-map-global.controller';
+import { Octomap3dPcdGlobal } from './octomap-3d-pcd-global.controller';
 
 /** 行进速度，世界单位/秒。 */
 const DOG_SPEED = 4;
@@ -18,7 +18,7 @@ const UP = new THREE.Vector3(0, 1, 0);
  * 地形上。
  */
 @Injectable()
-export class OctoMapDogController {
+export class Octomap3dPcdDog {
   /** 地面上的世界坐标起点，作为寻路起点使用。 */
   startPosition: [number, number, number] | null = null;
 
@@ -74,7 +74,7 @@ export class OctoMapDogController {
   private readonly pointer = new THREE.Vector2();
   private readonly onFrame = (delta: number): void => this.update(delta);
 
-  constructor(private readonly global: OctoMapGlobalController) {
+  constructor(private readonly global: Octomap3dPcdGlobal) {
     this.global.addFrameListener(this.onFrame);
   }
 
@@ -688,7 +688,7 @@ export class OctoMapDogController {
       this.collisionRadius,
     );
     // 底面贴着小狗脚下，而不是世界原点：地面高度是扫描出来的（见
-    // OctoMapGrilleController.groundLevel），写死 0 会让整个碰撞体悬在
+    // Octomap3dPcdGrille.groundLevel），写死 0 会让整个碰撞体悬在
     // 地面之上——扫描的地板压在 y=0 以下时，狗站在地上而圆柱浮在空中。
     this.collisionVolume.position.set(
       dog.position.x,

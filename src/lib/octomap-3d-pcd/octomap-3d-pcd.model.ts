@@ -1,8 +1,8 @@
 /**
- * PCD 解析器与 OctoMapComponent 之间共享的数据契约。
+ * PCD 解析器与 Octomap3dPcdComponent 之间共享的数据契约。
  */
 
-/** 由 {@link OctoMapComponent} 渲染的三维点云。 */
+/** 由 {@link Octomap3dPcdComponent} 渲染的三维点云。 */
 export interface OctoMapPointCloud {
   /** 交错的 XYZ 坐标，长度 = pointCount * 3。 */
   positions: Float32Array;
@@ -163,7 +163,7 @@ export interface OctoMapPointClickedDetail {
 export interface OctoMapHoverInfo {
   /** 世界坐标。 */
   position: [number, number, number];
-  /** 相对扫描出的地板高度（见 `OctoMapGrilleController.groundLevel`）。 */
+  /** 相对扫描出的地板高度（见 `Octomap3dPcdGrille.groundLevel`）。 */
   height: number;
   /** 立体格栅模式下该体素是否为已刷的禁行障碍；点云模式下无此概念，为 null。 */
   forbidden: boolean | null;
@@ -184,7 +184,7 @@ export type OctoMapRenderMode = 'points' | 'voxel';
 
 /**
  * 一次俯视投影的全部输入（`(projectionSource)` 的负载，也是
- * {@link OctoMapComponent.projectionSource} 的答复类型）。
+ * {@link Octomap3dPcdComponent.projectionSource} 的答复类型）。
  *
  * 它住在模型的这一边，是因为它是**地图交出去的契约**：组件只负责按当前视图拼出这三样
  * （点、对齐用的包围盒、分辨率），把点压成图的那一步在消费方
@@ -219,7 +219,7 @@ export interface OctoMapBrushMissDetail {
 /**
  * 用哪种方式寻路。
  *
- * 每个取值对应 `OctoMapPathPlanner` 的一个子类，两者的**搜索、平滑、起终点吸附完全
+ * 每个取值对应 `Octomap3dPcdPathPlanner` 的一个子类，两者的**搜索、平滑、起终点吸附完全
  * 共用**，只差「表面图怎么建」这一步。所以切换它换掉的是「小狗走的那张面是什么」，
  * 而不是搜索算法本身。
  *
@@ -237,7 +237,7 @@ export interface OctoMapBrushMissDetail {
  * 认领它们的面高（多源 BFS，半径由点云自己的稀疏度推），于是小狗走在**云点那张面**
  * 上——铲平、补全云点会直接改变路线。认领的高度若比同一邻域内最低的真实地板高出一
  * 个量级（门楣、架子、桌面下方的晕圈），就退回 `groundLevel`，见
- * `OctoMapNavSurface` 的 `FILL_MAX_RISE`。
+ * `Octomap3dPcdNavSurface` 的 `FILL_MAX_RISE`。
  *
  * 它不是 `'surfaceGraph'` 的升级版，是一个**取舍**：填充只覆盖有点的列半径之内的空列
  * （真图上是空列的 13.7%，R = 2），所以它补的是扫描的缺口，**不是**把整张地板重建出
@@ -303,12 +303,12 @@ export interface OctoMapPathFailedDetail {
    * 时量三维（停在正下方不算走到，那正是接受范围是个球的意思）；终点有面接着
    * （点在墙面、桌面、台阶立面上）时只量水平——那时路径末端本来就该落在终点脚下
    * 的那个面上，量三维会一律误判成「差一个立面高度」。判别式与画法都在
-   * `OctoMapPathController.goalOnFace`，理由详见 `OctoMapController.findPath`。
+   * `Octomap3dPcdPath.goalOnFace`，理由详见 `Octomap3dPcd.findPath`。
    */
   distance: number | null;
   /**
    * 那一次迈不过去的高度（世界单位，取绝对值）；只有 `gap` 和 `dogStuck` 时有值，
-   * 其余为 null。两处量的是不同的两头（见 `OctoMapPathController.computePath`），
+   * 其余为 null。两处量的是不同的两头（见 `Octomap3dPcdPath.computePath`），
    * **含义也不一样，别当成同一件事报**：
    *
    * - `gap`：终点那个面到「最近可达处」的高度差。它一定大于跨越高度，而且**照着它
@@ -368,7 +368,7 @@ export interface OctoMapDogModelRequest {
 }
 
 /**
- * {@link OctoMapComponent} 使用的可调视图参数。
+ * {@link Octomap3dPcdComponent} 使用的可调视图参数。
  *
  * 这一份里的每一项都由父组件**逐项**绑到 `howell-octomap-3d-pcd` 上
  * （`system-manager.component.html` 那 33 条 `[同名]="settings().同名"`，没有改名、
@@ -468,7 +468,7 @@ export interface OctoMapMapSettings {
    *   落差恒为 0，守卫必然放行，填充会沿着薄片挤出一条**平行的可行走幽灵坡道**。那
    *   条坡道刷不上障碍（它没有真实体素可标），小狗就顺着它从薄片**外面**爬上去。
    *
-   * 默认 8 格（0.4 m）是被量出来的：见 `OctoMapNavSurface` 的 `fillEmptyColumns`。下限
+   * 默认 8 格（0.4 m）是被量出来的：见 `Octomap3dPcdNavSurface` 的 `fillEmptyColumns`。下限
    * 2 格等于「不放大，只用点云稀疏度推出的半径本身」，也就是加上这个设置之前的行为；
    * 上限 12 格是性能护栏（见 `FILL_BASE_CELLS_MAX`）。两个端点之间是单调的：**调大只
    * 会减少填充列，不会新增、也不会改变任何一列的认领高度**。
@@ -555,7 +555,7 @@ export interface OctoMapMapSettings {
    *
    * 1. **视觉**：视口那块灰平面要不要留外圈边距（`groundPlaneRect`）。这是纯粹的
    *    可点击范围——平面没盖到的地方，放狗/刷障碍/设终点的点击会被静默丢掉。
-   * 2. **规划**：关掉时把包围盒外那一圈虚拟地面**封住**（`OctoMapNavSurface`
+   * 2. **规划**：关掉时把包围盒外那一圈虚拟地面**封住**（`Octomap3dPcdNavSurface`
    *    的 `groundExtendsOutside`），小狗就出不了扫描范围。
    *
    * 而边距的**大小**不在这里，是 {@link groundExtendX} / {@link groundExtendZ}，

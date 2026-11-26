@@ -2,7 +2,7 @@
  * 点云「地板」的纯函数。
  *
  * 单独成文件是因为它有两个消费者：地图拿它定地面平面 / 参考网格 / 寻路阈值的高度
- * 基准（`OctoMapGrilleController.groundLevel`），宿主拿它算「贴合地面」该挪多少
+ * 基准（`Octomap3dPcdGrille.groundLevel`），宿主拿它算「贴合地面」该挪多少
  * （`SystemManagerComponent.alignCloudTranslation`）。两边必须是**同一条规则**——
  * 差一厘米，按那一下按钮就会把云挪出一厘米。
  */

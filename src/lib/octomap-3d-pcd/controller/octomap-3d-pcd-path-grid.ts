@@ -7,7 +7,7 @@ import { OctoMapBoundingBox } from '../octomap-3d-pcd.model';
  * 那几张 `Float32Array` / `Uint8Array` 的长度，跟其中多少格真的被搜到无关。
  *
  * 它真正防的是一件事：包围盒来自 `new THREE.Box3().setFromArray(points.positions)`
- * （见 `OctoMapPointController`），是**全部点的裸 AABB**。一个离群点就能把盒子的
+ * （见 `Octomap3dPcdPoint`），是**全部点的裸 AABB**。一个离群点就能把盒子的
  * 边长撑大几倍，而格数是边长的**平方**——几个离群点足以让这里要分配几 GB，把页面
  * 搞崩。所以这个上限是必须要有的，不是保守。
  *
@@ -31,7 +31,7 @@ export const NAV_CELL_SIZE = 0.05;
 /**
  * 碰撞半径之外额外留的安全余量，取**半格**。
  *
- * 判定是格粒度的：小狗的脚印（半径 R 的那个圆盘，见 `OctoMapNavSurface.standable`）
+ * 判定是格粒度的：小狗的脚印（半径 R 的那个圆盘，见 `Octomap3dPcdNavSurface.standable`）
  * 落在格上，挡住它的几何也是按**整列**算的，两者量出来的都是「格心之间的距离」，
  * 推不出「到**真实墙面**的距离」。设真实墙点 `w` 落在障碍格 `j` 里（格心 `C_j`），
  * 自由格心 `p` 满足 `dist(p, C_j) ≥ R`，于是
@@ -58,8 +58,8 @@ export const CELL_SAFETY = NAV_CELL_SIZE / 2;
  * 规划网格的尺寸与原点——建网格用的那一套边界。
  *
  * 独立函数（不是某个类的方法）是因为它有**三个**消费者，而它们分属两个类：
- * 真的建网格的 `OctoMapPathController.computePath`、「这块地会不会超限」的判定，
- * 以及把上限范围画到场景里的那条边界线（`OctoMapPathController.navLimitRect`，
+ * 真的建网格的 `Octomap3dPcdPath.computePath`、「这块地会不会超限」的判定，
+ * 以及把上限范围画到场景里的那条边界线（`Octomap3dPcdPath.navLimitRect`，
  * **纯绘制**）。让「会不会超限」能在**不真的建网格**的前提下被问到，是绘制和报错
  * 都做得到的前提——也正因为它同时服务绘制与规划，它必须留在一个两边都够得着的
  * 纯模块里，而不是挂到某个规划器上（那样绘制就得先拿到一个规划器实例）。
