@@ -1,0 +1,85 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.octo-map__viewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  // 读数浮框就绝对定位在这上面；canvas 是 init() 动态塞进来的兄弟节点，
+  // 没有这个定位祖先它会跑到别处去。
+  position: relative;
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// 右下角的云点读数。颜色沿用设置面板那一套（背景 #141a24、描边 #232b3a）。
+.octo-map__readout {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1;
+  min-width: 132px;
+  padding: 8px 10px;
+  border: 1px solid #232b3a;
+  border-radius: 6px;
+  background: rgba(20, 26, 36, 0.88);
+  font-size: 12px;
+  line-height: 1.6;
+  // 浮框压在画布上，别把相机的拖拽手势挡掉。
+  pointer-events: none;
+
+  &-head {
+    margin-bottom: 4px;
+    color: #8b98ad;
+    font-size: 11px;
+  }
+
+  &-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &-key {
+    color: #8b98ad;
+  }
+
+  &-value {
+    color: #e6edf7;
+    // 等宽数字：鼠标划过时数字不会左右抖。
+    font-variant-numeric: tabular-nums;
+
+    &--danger {
+      color: #ef4444;
+    }
+  }
+}
+
+// 左上角的整体平移读数。与右下那块同一套配色，但更轻：一行字，不抢画面。
+.octo-map__gizmo-readout {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 1;
+  padding: 5px 9px;
+  border: 1px solid #232b3a;
+  border-radius: 6px;
+  background: rgba(20, 26, 36, 0.88);
+  color: #e6edf7;
+  font-size: 12px;
+  line-height: 1.5;
+  // 位移与旋转各一行：宿主在同一个串里用换行分隔（HTML 默认会把换行折成空格）。
+  white-space: pre-line;
+  // 等宽数字：拖手柄时数字不会左右抖。
+  font-variant-numeric: tabular-nums;
+  // 与悬停读数同理：浮框压着画布，别把相机手势挡掉。
+  pointer-events: none;
+}

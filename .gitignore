@@ -2,6 +2,10 @@
 node_modules/
 .angular/
 .npm/
+out-tsc/
+
+# 构建产物：只提交到 release 分支，不进 main
+dist/
 
 # 日志与系统文件
 *.log
