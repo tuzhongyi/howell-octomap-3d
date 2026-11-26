@@ -2,9 +2,9 @@ import * as i0 from '@angular/core';
 import { AfterViewInit, OnChanges, OnDestroy, EventEmitter, SimpleChanges } from '@angular/core';
 
 /**
- * PCD 解析器与 OctoMapComponent 之间共享的数据契约。
+ * PCD 解析器与 Octomap3dPcdComponent 之间共享的数据契约。
  */
-/** 由 {@link OctoMapComponent} 渲染的三维点云。 */
+/** 由 {@link Octomap3dPcdComponent} 渲染的三维点云。 */
 interface OctoMapPointCloud {
     /** 交错的 XYZ 坐标，长度 = pointCount * 3。 */
     positions: Float32Array;
@@ -154,7 +154,7 @@ interface OctoMapPointClickedDetail {
 interface OctoMapHoverInfo {
     /** 世界坐标。 */
     position: [number, number, number];
-    /** 相对扫描出的地板高度（见 `OctoMapGrilleController.groundLevel`）。 */
+    /** 相对扫描出的地板高度（见 `Octomap3dPcdGrille.groundLevel`）。 */
     height: number;
     /** 立体格栅模式下该体素是否为已刷的禁行障碍；点云模式下无此概念，为 null。 */
     forbidden: boolean | null;
@@ -172,7 +172,7 @@ interface OctoMapPaintedVoxels {
 type OctoMapRenderMode = 'points' | 'voxel';
 /**
  * 一次俯视投影的全部输入（`(projectionSource)` 的负载，也是
- * {@link OctoMapComponent.projectionSource} 的答复类型）。
+ * {@link Octomap3dPcdComponent.projectionSource} 的答复类型）。
  *
  * 它住在模型的这一边，是因为它是**地图交出去的契约**：组件只负责按当前视图拼出这三样
  * （点、对齐用的包围盒、分辨率），把点压成图的那一步在消费方
@@ -205,7 +205,7 @@ interface OctoMapBrushMissDetail {
 /**
  * 用哪种方式寻路。
  *
- * 每个取值对应 `OctoMapPathPlanner` 的一个子类，两者的**搜索、平滑、起终点吸附完全
+ * 每个取值对应 `Octomap3dPcdPathPlanner` 的一个子类，两者的**搜索、平滑、起终点吸附完全
  * 共用**，只差「表面图怎么建」这一步。所以切换它换掉的是「小狗走的那张面是什么」，
  * 而不是搜索算法本身。
  *
@@ -223,7 +223,7 @@ interface OctoMapBrushMissDetail {
  * 认领它们的面高（多源 BFS，半径由点云自己的稀疏度推），于是小狗走在**云点那张面**
  * 上——铲平、补全云点会直接改变路线。认领的高度若比同一邻域内最低的真实地板高出一
  * 个量级（门楣、架子、桌面下方的晕圈），就退回 `groundLevel`，见
- * `OctoMapNavSurface` 的 `FILL_MAX_RISE`。
+ * `Octomap3dPcdNavSurface` 的 `FILL_MAX_RISE`。
  *
  * 它不是 `'surfaceGraph'` 的升级版，是一个**取舍**：填充只覆盖有点的列半径之内的空列
  * （真图上是空列的 13.7%，R = 2），所以它补的是扫描的缺口，**不是**把整张地板重建出
@@ -286,12 +286,12 @@ interface OctoMapPathFailedDetail {
      * 时量三维（停在正下方不算走到，那正是接受范围是个球的意思）；终点有面接着
      * （点在墙面、桌面、台阶立面上）时只量水平——那时路径末端本来就该落在终点脚下
      * 的那个面上，量三维会一律误判成「差一个立面高度」。判别式与画法都在
-     * `OctoMapPathController.goalOnFace`，理由详见 `OctoMapController.findPath`。
+     * `Octomap3dPcdPath.goalOnFace`，理由详见 `Octomap3dPcd.findPath`。
      */
     distance: number | null;
     /**
      * 那一次迈不过去的高度（世界单位，取绝对值）；只有 `gap` 和 `dogStuck` 时有值，
-     * 其余为 null。两处量的是不同的两头（见 `OctoMapPathController.computePath`），
+     * 其余为 null。两处量的是不同的两头（见 `Octomap3dPcdPath.computePath`），
      * **含义也不一样，别当成同一件事报**：
      *
      * - `gap`：终点那个面到「最近可达处」的高度差。它一定大于跨越高度，而且**照着它
@@ -344,7 +344,7 @@ interface OctoMapDogModelRequest {
     reply?: OctoMapReply<string | null>;
 }
 /**
- * {@link OctoMapComponent} 使用的可调视图参数。
+ * {@link Octomap3dPcdComponent} 使用的可调视图参数。
  *
  * 这一份里的每一项都由父组件**逐项**绑到 `howell-octomap-3d-pcd` 上
  * （`system-manager.component.html` 那 33 条 `[同名]="settings().同名"`，没有改名、
@@ -444,7 +444,7 @@ interface OctoMapMapSettings {
      *   落差恒为 0，守卫必然放行，填充会沿着薄片挤出一条**平行的可行走幽灵坡道**。那
      *   条坡道刷不上障碍（它没有真实体素可标），小狗就顺着它从薄片**外面**爬上去。
      *
-     * 默认 8 格（0.4 m）是被量出来的：见 `OctoMapNavSurface` 的 `fillEmptyColumns`。下限
+     * 默认 8 格（0.4 m）是被量出来的：见 `Octomap3dPcdNavSurface` 的 `fillEmptyColumns`。下限
      * 2 格等于「不放大，只用点云稀疏度推出的半径本身」，也就是加上这个设置之前的行为；
      * 上限 12 格是性能护栏（见 `FILL_BASE_CELLS_MAX`）。两个端点之间是单调的：**调大只
      * 会减少填充列，不会新增、也不会改变任何一列的认领高度**。
@@ -531,7 +531,7 @@ interface OctoMapMapSettings {
      *
      * 1. **视觉**：视口那块灰平面要不要留外圈边距（`groundPlaneRect`）。这是纯粹的
      *    可点击范围——平面没盖到的地方，放狗/刷障碍/设终点的点击会被静默丢掉。
-     * 2. **规划**：关掉时把包围盒外那一圈虚拟地面**封住**（`OctoMapNavSurface`
+     * 2. **规划**：关掉时把包围盒外那一圈虚拟地面**封住**（`Octomap3dPcdNavSurface`
      *    的 `groundExtendsOutside`），小狗就出不了扫描范围。
      *
      * 而边距的**大小**不在这里，是 {@link groundExtendX} / {@link groundExtendZ}，
@@ -619,7 +619,7 @@ declare const DEFAULT_OCTO_MAP_SETTINGS: {
  * 组件本身只是一层薄外观：把参数和 DOM 事件转发给控制器，再把控制器的事件转发出去——
  * 所有渲染逻辑都在 `controller/` 里。
  */
-declare class OctoMapComponent implements AfterViewInit, OnChanges, OnDestroy {
+declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestroy {
     private readonly viewportRef;
     /** 要渲染的点云。传 null 清空视口。 */
     points: OctoMapPointCloud | null;
@@ -629,7 +629,7 @@ declare class OctoMapComponent implements AfterViewInit, OnChanges, OnDestroy {
      *
      * 多份点云拼成了一份渲染对象（手柄只该动其中一份），整份对象一挪会把别的云也
      * 带走，所以这里只动选中那一份：体素模式改写它占的那些实例矩阵，点云模式重画一份
-     * 世界。与普通的 `points` 换新**刻意不同**：不走 {@link OctoMapController.rebuild}，
+     * 世界。与普通的 `points` 换新**刻意不同**：不走 {@link Octomap3dPcd.rebuild}，
      * 于是包围盒、地板高度、网格与地面、导航边界、手柄位姿都不动——拖动过程中世界并没有
      * 真的改变，那些跟着跳只会让参考物失去参照。
      *
@@ -951,7 +951,7 @@ declare class OctoMapComponent implements AfterViewInit, OnChanges, OnDestroy {
      * 排一次悬停探测（每帧最多一次）。
      *
      * 跟着 pointermove 直接拾取会把帧率拖垮：点云模式下一次射线拾取要遍历上百万个
-     * 点（见 `OctoMapGrilleController.probe`），而 pointermove 一帧能来十几个。攒到
+     * 点（见 `Octomap3dPcdGrille.probe`），而 pointermove 一帧能来十几个。攒到
      * 下一帧统一算，鼠标划得再快也只算一遍。
      */
     private scheduleHover;
@@ -1033,10 +1033,10 @@ declare class OctoMapComponent implements AfterViewInit, OnChanges, OnDestroy {
      * 与 {@link renderOptions} 同一个路数。
      */
     private groundExtent;
-    static ɵfac: i0.ɵɵFactoryDeclaration<OctoMapComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<OctoMapComponent, "howell-octomap-3d-pcd", never, { "points": { "alias": "points"; "required": false; }; "preview": { "alias": "preview"; "required": false; }; "gizmoMode": { "alias": "gizmoMode"; "required": false; }; "gizmoPose": { "alias": "gizmoPose"; "required": false; }; "selectionBox": { "alias": "selectionBox"; "required": false; }; "gizmoPreview": { "alias": "gizmoPreview"; "required": false; }; "fitOnPointsChange": { "alias": "fitOnPointsChange"; "required": false; }; "refitReferenceOnPointsChange": { "alias": "refitReferenceOnPointsChange"; "required": false; }; "gizmoReadout": { "alias": "gizmoReadout"; "required": false; }; "renderMode": { "alias": "renderMode"; "required": false; }; "voxelSize": { "alias": "voxelSize"; "required": false; }; "backgroundColor": { "alias": "backgroundColor"; "required": false; }; "pointColor": { "alias": "pointColor"; "required": false; }; "pointSize": { "alias": "pointSize"; "required": false; }; "showGrid": { "alias": "showGrid"; "required": false; }; "showNavLimit": { "alias": "showNavLimit"; "required": false; }; "showPath": { "alias": "showPath"; "required": false; }; "showPathPoints": { "alias": "showPathPoints"; "required": false; }; "gridSize": { "alias": "gridSize"; "required": false; }; "gridDivisions": { "alias": "gridDivisions"; "required": false; }; "fitView": { "alias": "fitView"; "required": false; }; "autoRotate": { "alias": "autoRotate"; "required": false; }; "showColoring": { "alias": "showColoring"; "required": false; }; "forbiddenColor": { "alias": "forbiddenColor"; "required": false; }; "painted": { "alias": "painted"; "required": false; }; "interactionMode": { "alias": "interactionMode"; "required": false; }; "brushRadius": { "alias": "brushRadius"; "required": false; }; "maxStepHeight": { "alias": "maxStepHeight"; "required": false; }; "crossWidth": { "alias": "crossWidth"; "required": false; }; "fillBaseCells": { "alias": "fillBaseCells"; "required": false; }; "goalRadius": { "alias": "goalRadius"; "required": false; }; "dogRadius": { "alias": "dogRadius"; "required": false; }; "dogHeight": { "alias": "dogHeight"; "required": false; }; "showDogCollision": { "alias": "showDogCollision"; "required": false; }; "dogScale": { "alias": "dogScale"; "required": false; }; "dogFitCollision": { "alias": "dogFitCollision"; "required": false; }; "dogModelHeading": { "alias": "dogModelHeading"; "required": false; }; "dogHeading": { "alias": "dogHeading"; "required": false; }; "maxHeight": { "alias": "maxHeight"; "required": false; }; "minHeight": { "alias": "minHeight"; "required": false; }; "groundExtendsOutside": { "alias": "groundExtendsOutside"; "required": false; }; "groundExtendX": { "alias": "groundExtendX"; "required": false; }; "groundExtendZ": { "alias": "groundExtendZ"; "required": false; }; "pathAlgorithm": { "alias": "pathAlgorithm"; "required": false; }; "maxPickingPoints": { "alias": "maxPickingPoints"; "required": false; }; "findPath": { "alias": "findPath"; "required": false; }; "startWalk": { "alias": "startWalk"; "required": false; }; "seekWalk": { "alias": "seekWalk"; "required": false; }; "pauseWalk": { "alias": "pauseWalk"; "required": false; }; "resumeWalk": { "alias": "resumeWalk"; "required": false; }; "clearDeployment": { "alias": "clearDeployment"; "required": false; }; "markAllObstacles": { "alias": "markAllObstacles"; "required": false; }; "clearObstacles": { "alias": "clearObstacles"; "required": false; }; "clearDogModel": { "alias": "clearDogModel"; "required": false; }; "loadDogModel": { "alias": "loadDogModel"; "required": false; }; "exportPointCloud": { "alias": "exportPointCloud"; "required": false; }; "regularizeCloud": { "alias": "regularizeCloud"; "required": false; }; "projectionSource": { "alias": "projectionSource"; "required": false; }; }, { "mapReady": "mapReady"; "pointsChanged": "pointsChanged"; "cloudTranslated": "cloudTranslated"; "cloudTranslating": "cloudTranslating"; "cloudRotated": "cloudRotated"; "cloudRotating": "cloudRotating"; "pointClicked": "pointClicked"; "pathChanged": "pathChanged"; "pathFailed": "pathFailed"; "walkProgress": "walkProgress"; "dogPlaced": "dogPlaced"; "goalPlaced": "goalPlaced"; "paintedChanged": "paintedChanged"; "brushMiss": "brushMiss"; "interactionModeChange": "interactionModeChange"; "error": "error"; }, never, never, true, never>;
+    static ɵfac: i0.ɵɵFactoryDeclaration<Octomap3dPcdComponent, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<Octomap3dPcdComponent, "howell-octomap-3d-pcd", never, { "points": { "alias": "points"; "required": false; }; "preview": { "alias": "preview"; "required": false; }; "gizmoMode": { "alias": "gizmoMode"; "required": false; }; "gizmoPose": { "alias": "gizmoPose"; "required": false; }; "selectionBox": { "alias": "selectionBox"; "required": false; }; "gizmoPreview": { "alias": "gizmoPreview"; "required": false; }; "fitOnPointsChange": { "alias": "fitOnPointsChange"; "required": false; }; "refitReferenceOnPointsChange": { "alias": "refitReferenceOnPointsChange"; "required": false; }; "gizmoReadout": { "alias": "gizmoReadout"; "required": false; }; "renderMode": { "alias": "renderMode"; "required": false; }; "voxelSize": { "alias": "voxelSize"; "required": false; }; "backgroundColor": { "alias": "backgroundColor"; "required": false; }; "pointColor": { "alias": "pointColor"; "required": false; }; "pointSize": { "alias": "pointSize"; "required": false; }; "showGrid": { "alias": "showGrid"; "required": false; }; "showNavLimit": { "alias": "showNavLimit"; "required": false; }; "showPath": { "alias": "showPath"; "required": false; }; "showPathPoints": { "alias": "showPathPoints"; "required": false; }; "gridSize": { "alias": "gridSize"; "required": false; }; "gridDivisions": { "alias": "gridDivisions"; "required": false; }; "fitView": { "alias": "fitView"; "required": false; }; "autoRotate": { "alias": "autoRotate"; "required": false; }; "showColoring": { "alias": "showColoring"; "required": false; }; "forbiddenColor": { "alias": "forbiddenColor"; "required": false; }; "painted": { "alias": "painted"; "required": false; }; "interactionMode": { "alias": "interactionMode"; "required": false; }; "brushRadius": { "alias": "brushRadius"; "required": false; }; "maxStepHeight": { "alias": "maxStepHeight"; "required": false; }; "crossWidth": { "alias": "crossWidth"; "required": false; }; "fillBaseCells": { "alias": "fillBaseCells"; "required": false; }; "goalRadius": { "alias": "goalRadius"; "required": false; }; "dogRadius": { "alias": "dogRadius"; "required": false; }; "dogHeight": { "alias": "dogHeight"; "required": false; }; "showDogCollision": { "alias": "showDogCollision"; "required": false; }; "dogScale": { "alias": "dogScale"; "required": false; }; "dogFitCollision": { "alias": "dogFitCollision"; "required": false; }; "dogModelHeading": { "alias": "dogModelHeading"; "required": false; }; "dogHeading": { "alias": "dogHeading"; "required": false; }; "maxHeight": { "alias": "maxHeight"; "required": false; }; "minHeight": { "alias": "minHeight"; "required": false; }; "groundExtendsOutside": { "alias": "groundExtendsOutside"; "required": false; }; "groundExtendX": { "alias": "groundExtendX"; "required": false; }; "groundExtendZ": { "alias": "groundExtendZ"; "required": false; }; "pathAlgorithm": { "alias": "pathAlgorithm"; "required": false; }; "maxPickingPoints": { "alias": "maxPickingPoints"; "required": false; }; "findPath": { "alias": "findPath"; "required": false; }; "startWalk": { "alias": "startWalk"; "required": false; }; "seekWalk": { "alias": "seekWalk"; "required": false; }; "pauseWalk": { "alias": "pauseWalk"; "required": false; }; "resumeWalk": { "alias": "resumeWalk"; "required": false; }; "clearDeployment": { "alias": "clearDeployment"; "required": false; }; "markAllObstacles": { "alias": "markAllObstacles"; "required": false; }; "clearObstacles": { "alias": "clearObstacles"; "required": false; }; "clearDogModel": { "alias": "clearDogModel"; "required": false; }; "loadDogModel": { "alias": "loadDogModel"; "required": false; }; "exportPointCloud": { "alias": "exportPointCloud"; "required": false; }; "regularizeCloud": { "alias": "regularizeCloud"; "required": false; }; "projectionSource": { "alias": "projectionSource"; "required": false; }; }, { "mapReady": "mapReady"; "pointsChanged": "pointsChanged"; "cloudTranslated": "cloudTranslated"; "cloudTranslating": "cloudTranslating"; "cloudRotated": "cloudRotated"; "cloudRotating": "cloudRotating"; "pointClicked": "pointClicked"; "pathChanged": "pathChanged"; "pathFailed": "pathFailed"; "walkProgress": "walkProgress"; "dogPlaced": "dogPlaced"; "goalPlaced": "goalPlaced"; "paintedChanged": "paintedChanged"; "brushMiss": "brushMiss"; "interactionModeChange": "interactionModeChange"; "error": "error"; }, never, never, true, never>;
 }
 
-export { DEFAULT_OCTO_MAP_SETTINGS, MAP_CONFIG_KEYS, OctoMapComponent };
+export { DEFAULT_OCTO_MAP_SETTINGS, MAP_CONFIG_KEYS, Octomap3dPcdComponent };
 export type { OctoMapBoundingBox, OctoMapBrushMissDetail, OctoMapCloudPreview, OctoMapCloudRotation, OctoMapCloudTranslation, OctoMapDogModelRequest, OctoMapGizmoMode, OctoMapGizmoPose, OctoMapHoverInfo, OctoMapInteractionMode, OctoMapMapSettings, OctoMapPaintedVoxels, OctoMapPathAlgorithm, OctoMapPathFailedDetail, OctoMapPathFailureReason, OctoMapPointClickedDetail, OctoMapPointCloud, OctoMapPointsChangedDetail, OctoMapProjectionSource, OctoMapReadyDetail, OctoMapRenderMode, OctoMapReply, OctoMapSelectionBox, OctoMapWalkProgress, OctoMapWalkState };
 //# sourceMappingURL=howell-octomap-3d.d.ts.map

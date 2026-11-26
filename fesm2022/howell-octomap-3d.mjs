@@ -9,8 +9,8 @@ import { TransformControls } from 'three/addons/controls/TransformControls.js';
 /**
  * 包围盒 + 延展设置 → 地面平面的宽/深。
  *
- * 独立成纯函数（而不是 `OctoMapGlobalController` 的方法）的理由和
- * `octo-map-path-grid.ts` 里的 `navGridSize` 一样：那个控制器顶层
+ * 独立成纯函数（而不是 `Octomap3dPcdGlobal` 的方法）的理由和
+ * `octomap-3d-pcd-path-grid.ts` 里的 `navGridSize` 一样：那个控制器顶层
  * `import { OrbitControls } from 'three/addons/...'`，而全仓没有任何 spec import
  * 过那个文件（只有几个控制器 import 它，且都只用在类型位置）——把纯算术留在那里
  * 就等于让一个 THREE addons 依赖来给测试会不会跑起来作答。这里要钉的东西（各轴
@@ -19,7 +19,7 @@ import { TransformControls } from 'three/addons/controls/TransformControls.js';
  * **每轴对称生长**，两边各长 `x` / `z`。
  *
  * `anchor` 是平面**实际**的中心（XZ）。省略时就是包围盒中心，也就是平面永远罩着
- * 点云；给了别的点（参考物钉住不动时，见 `OctoMapGlobalController.anchorReference`），
+ * 点云；给了别的点（参考物钉住不动时，见 `Octomap3dPcdGlobal.anchorReference`），
  * 点云可能已经挪到平面外，那就再按「锚点到包围盒中心」的距离**长出去**——平面不
  * 挪，只是变大。它是放狗、设终点、刷障碍的射线靶面，盖不住就点不着，所以这一步
  * 不能省。锚点恰好在包围盒中心时这一项为 0，与改动前逐个数字相同。
@@ -80,7 +80,7 @@ function eulerDegreesOf(q) {
  * 负责 Three.js 场景图——渲染器、相机、控制器、网格和灯光——
  * 以及渲染循环和尺寸变化处理。所有“场景级”的东西都在这里。
  */
-class OctoMapGlobalController {
+class Octomap3dPcdGlobal {
     scene;
     camera;
     renderer;
@@ -588,10 +588,10 @@ class OctoMapGlobalController {
         this.frameListeners.forEach((listener) => listener(delta));
         this.renderer.render(this.scene, this.camera);
     };
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapGlobalController, deps: [], target: i0.ɵɵFactoryTarget.Injectable });
-    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapGlobalController });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdGlobal, deps: [], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdGlobal });
 }
-i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapGlobalController, decorators: [{
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdGlobal, decorators: [{
             type: Injectable
         }] });
 
@@ -606,7 +606,7 @@ const UP = new THREE.Vector3(0, 1, 0);
  * 小狗的 group 原点位于脚底，因此把它放到地面点上时，它会站在
  * 地形上。
  */
-class OctoMapDogController {
+class Octomap3dPcdDog {
     global;
     /** 地面上的世界坐标起点，作为寻路起点使用。 */
     startPosition = null;
@@ -1214,7 +1214,7 @@ class OctoMapDogController {
         // 圆柱绕竖直轴是对称的，转不转一个样，正前方改由三角形表示。
         this.collisionVolume.scale.set(this.collisionRadius, this.collisionHeight, this.collisionRadius);
         // 底面贴着小狗脚下，而不是世界原点：地面高度是扫描出来的（见
-        // OctoMapGrilleController.groundLevel），写死 0 会让整个碰撞体悬在
+        // Octomap3dPcdGrille.groundLevel），写死 0 会让整个碰撞体悬在
         // 地面之上——扫描的地板压在 y=0 以下时，狗站在地上而圆柱浮在空中。
         this.collisionVolume.position.set(dog.position.x, dog.position.y + this.collisionHeight / 2, dog.position.z);
         this.collisionArrow.visible = true;
@@ -1291,15 +1291,15 @@ class OctoMapDogController {
         const progress = this.totalLength > 0 ? this.traveled / this.totalLength : 0;
         this.walkStateChanged.next({ progress, state, headingLocked: this.headingLocked });
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapDogController, deps: [{ token: OctoMapGlobalController }], target: i0.ɵɵFactoryTarget.Injectable });
-    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapDogController });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdDog, deps: [{ token: Octomap3dPcdGlobal }], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdDog });
 }
-i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapDogController, decorators: [{
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdDog, decorators: [{
             type: Injectable
-        }], ctorParameters: () => [{ type: OctoMapGlobalController }] });
+        }], ctorParameters: () => [{ type: Octomap3dPcdGlobal }] });
 
 /**
- * PCD 解析器与 OctoMapComponent 之间共享的数据契约。
+ * PCD 解析器与 Octomap3dPcdComponent 之间共享的数据契约。
  */
 /**
  * `assets/config/octomap.config.json` 里必须出现的键，也就是
@@ -1396,7 +1396,7 @@ const DEFAULT_OCTO_MAP_SETTINGS = {
  * 那几张 `Float32Array` / `Uint8Array` 的长度，跟其中多少格真的被搜到无关。
  *
  * 它真正防的是一件事：包围盒来自 `new THREE.Box3().setFromArray(points.positions)`
- * （见 `OctoMapPointController`），是**全部点的裸 AABB**。一个离群点就能把盒子的
+ * （见 `Octomap3dPcdPoint`），是**全部点的裸 AABB**。一个离群点就能把盒子的
  * 边长撑大几倍，而格数是边长的**平方**——几个离群点足以让这里要分配几 GB，把页面
  * 搞崩。所以这个上限是必须要有的，不是保守。
  *
@@ -1418,7 +1418,7 @@ const NAV_CELL_SIZE = 0.05;
 /**
  * 碰撞半径之外额外留的安全余量，取**半格**。
  *
- * 判定是格粒度的：小狗的脚印（半径 R 的那个圆盘，见 `OctoMapNavSurface.standable`）
+ * 判定是格粒度的：小狗的脚印（半径 R 的那个圆盘，见 `Octomap3dPcdNavSurface.standable`）
  * 落在格上，挡住它的几何也是按**整列**算的，两者量出来的都是「格心之间的距离」，
  * 推不出「到**真实墙面**的距离」。设真实墙点 `w` 落在障碍格 `j` 里（格心 `C_j`），
  * 自由格心 `p` 满足 `dist(p, C_j) ≥ R`，于是
@@ -1444,8 +1444,8 @@ const CELL_SAFETY = NAV_CELL_SIZE / 2;
  * 规划网格的尺寸与原点——建网格用的那一套边界。
  *
  * 独立函数（不是某个类的方法）是因为它有**三个**消费者，而它们分属两个类：
- * 真的建网格的 `OctoMapPathController.computePath`、「这块地会不会超限」的判定，
- * 以及把上限范围画到场景里的那条边界线（`OctoMapPathController.navLimitRect`，
+ * 真的建网格的 `Octomap3dPcdPath.computePath`、「这块地会不会超限」的判定，
+ * 以及把上限范围画到场景里的那条边界线（`Octomap3dPcdPath.navLimitRect`，
  * **纯绘制**）。让「会不会超限」能在**不真的建网格**的前提下被问到，是绘制和报错
  * 都做得到的前提——也正因为它同时服务绘制与规划，它必须留在一个两边都够得着的
  * 纯模块里，而不是挂到某个规划器上（那样绘制就得先拿到一个规划器实例）。
@@ -1497,14 +1497,14 @@ function navGridSize(bbox, start, goal, dogRadius) {
 /**
  * 同一个 run 内相邻两点的最大竖直间距（世界单位）。
  *
- * 扫描出来的地面自带 1~3 cm 的起伏（见 `OctoMapPathPlanner` 里 `MIN_STEP_HEIGHT` 的
+ * 扫描出来的地面自带 1~3 cm 的起伏（见 `Octomap3dPcdPathPlanner` 里 `MIN_STEP_HEIGHT` 的
  * 注释），不合并的话一个平面会被噪声切成好几层，小狗在同一个地板上会有几十个
  * 「不同的高度」。
  *
  * 取 3 cm 是两头权衡：再小 → 噪声把平面切碎；再大 → 桌面会和它底下那层并成一块，
  * 于是「站在桌上」和「站在桌下」变成同一个 run。
  *
- * 可站判定里也用同一个值当「连成一片」的容差（{@link OctoMapNavSurface.standable}）：
+ * 可站判定里也用同一个值当「连成一片」的容差（{@link Octomap3dPcdNavSurface.standable}）：
  * 一个 run 的底端离局部表面比这更近，就算是我脚下的面的一部分，而不是悬空的一块。
  */
 const RUN_GAP = 0.03;
@@ -1518,7 +1518,7 @@ const RUN_GAP = 0.03;
  */
 const MAX_CROSS_CELLS = 12;
 /**
- * 直线段算「贴着表面走」的竖直容差（米），只用在 {@link OctoMapNavSurface.segmentClear}。
+ * 直线段算「贴着表面走」的竖直容差（米），只用在 {@link Octomap3dPcdNavSurface.segmentClear}。
  *
  * **不能拿 `step`（跨越高度）当这个容差**：那是「迈一步的容许落差」，不是「表面起伏的
  * 容许量」。用 step 的话，一根 12 格（0.6 m）的弦可以从一个 0.4 m 高的土包正上方笔直
@@ -1756,7 +1756,7 @@ function fillEmptyColumns(colLo, nx, nz, occupied, baseCells) {
  *
  * A* 本身不在这里——它属于规划器，这里只出「图」。
  */
-class OctoMapNavSurface {
+class Octomap3dPcdNavSurface {
     nx;
     nz;
     minX;
@@ -1941,7 +1941,7 @@ class OctoMapNavSurface {
         runOffset[cellCount] = runCount;
         // 裁到实际长度：cap 是按点数估的上界，留着会白占几 MB。列内 run 按 hi 升序
         // （ys 已排好），`forEachNeighbor` 因此可以顺序扫。
-        return new OctoMapNavSurface(nx, nz, minX, minZ, cell, groundLevel, loBuf.slice(0, runCount), hiBuf.slice(0, runCount), runOffset, cellBuf.slice(0, runCount), virtualBuf.slice(0, runCount));
+        return new Octomap3dPcdNavSurface(nx, nz, minX, minZ, cell, groundLevel, loBuf.slice(0, runCount), hiBuf.slice(0, runCount), runOffset, cellBuf.slice(0, runCount), virtualBuf.slice(0, runCount));
     }
     /**
      * 换一套小狗参数（碰撞半径、通行高度、跨越高度、地面范围、禁行列）。
@@ -1966,7 +1966,7 @@ class OctoMapNavSurface {
         for (let dz = -reach; dz <= reach; dz++) {
             for (let dx = -reach; dx <= reach; dx++) {
                 // `<=` 而不是 `<`：判据要与「以格心为心、半径 (r + 安全余量)/cell 的浮点圆盘」
-                // 逐位相同（碰撞半径滑块上的一厘米要真的是一厘米），见 `octo-map-path-grid.ts`
+                // 逐位相同（碰撞半径滑块上的一厘米要真的是一厘米），见 `octomap-3d-pcd-path-grid.ts`
                 // 里 `CELL_SAFETY` 的说明。
                 if (dx * dx + dz * dz <= r2) {
                     dxs.push(dx);
@@ -2257,7 +2257,7 @@ class OctoMapNavSurface {
     /**
      * 两端之间能不能**拉一条直线走过去**——小狗的身体沿这根弦扫过去，会不会碰到东西。
      *
-     * 用途是**把锯齿拉直**（见 `OctoMapPathPlanner` 的 `SMOOTH_CHORD_CELLS`）：A* 的
+     * 用途是**把锯齿拉直**（见 `Octomap3dPcdPathPlanner` 的 `SMOOTH_CHORD_CELLS`）：A* 的
      * 边权只跟「走了一步什么方向」有关，跟这些步的**先后**无关，于是所有同样方向组合的
      * 走法代价**严格相等**，折线的形状完全不受代价约束。量出来的样子就是每米 3 个转角、
      * 其中 75% 左右翻号——狗头一直在抖。要修它就得在代价之外再加一条**形状**判据，也就是
@@ -2449,7 +2449,7 @@ class OctoMapNavSurface {
      *
      * **不复用 `mapPoint` 的两个理由**：一是它在回答「该站到哪个节点上」，跟「有没有面」
      * 是两件事（终点浮在半空时它照样会返回一个地面节点，而那正是问题本身）；二是它的
-     * 签名被 spec 压着不能动。调用方见 `OctoMapPathPlanner.plan` 里 `goalTooHigh` 那段。
+     * 签名被 spec 压着不能动。调用方见 `Octomap3dPcdPathPlanner.plan` 里 `goalTooHigh` 那段。
      */
     columnTop(x, z) {
         const cx = Math.floor((x - this.minX) / this.cell);
@@ -2553,7 +2553,7 @@ class OctoMapNavSurface {
     get cfg() {
         const cfg = this.config;
         if (!cfg) {
-            throw new Error('OctoMapNavSurface 还没 configure 就被查询了');
+            throw new Error('Octomap3dPcdNavSurface 还没 configure 就被查询了');
         }
         return cfg;
     }
@@ -2621,12 +2621,12 @@ class MinHeap {
  */
 const MIN_STEP_HEIGHT = 0.01;
 /**
- * 一条**跨越边**（格距 ≥ 2 格，见 `OctoMapNavSurface` 的 `crossWidth`）的额外代价，
+ * 一条**跨越边**（格距 ≥ 2 格，见 `Octomap3dPcdNavSurface` 的 `crossWidth`）的额外代价，
  * 单位是格。
  *
  * 不加这一项，A* 对「走过去」和「跳过去」是**无所谓**的：边权是格心之间的水平距离，
  * 一次 3 格的跨越和三次 1 格的迈步都是 3。而跨越那一段只按墙规则采样（见
- * `OctoMapNavSurface.crossClear`），**不做**脚印判定，比走更松——于是泛化成本一样、
+ * `Octomap3dPcdNavSurface.crossClear`），**不做**脚印判定，比走更松——于是泛化成本一样、
  * 约束更少的那个，A* 会挑它。真图上量过：默认 0.125 m 时 60 组配对里 57 组的折线
  * 都含跨格步，整条路是连跳带蹦，而不是「绕着走、遇上坑才迈一步」。
  *
@@ -2665,7 +2665,7 @@ const VERTICAL_COST = 1;
  * 平滑的做法是「从当前顶点尽量往前跳，跳到跳不过去为止」——这一步能跳多远，决定了
  * 锯齿能被拉直到什么程度。取 12 格（0.6 m）与 `MAX_CROSS_CELLS` 同量级：弦越长，
  * 越能一次跨掉好几个锯齿周期；但一根长弦也是「AI 在图上抄近路」，它只受
- * {@link OctoMapNavSurface.segmentClear} 约束，所以别往长了放。
+ * {@link Octomap3dPcdNavSurface.segmentClear} 约束，所以别往长了放。
  *
  * 量过的锯齿尺度是 1 格幅、几个格一个周期（`q:\tmp\path-jitter.mjs`：每米 3 个转角，
  * 转角的 75% 是左右翻号的），12 格足够跨掉它。
@@ -2704,9 +2704,9 @@ function emptyPlan() {
  * 连同表面缓存一起被绕开，没有任何代价。
  *
  * 它是**纯类**：不碰 THREE、不碰 DOM、不是 `@Injectable`。构造它不需要 DI，测试
- * 里直接 `new` 就能跑，和 `OctoMapVoxelGrid` / `OctoMapNavSurface` 一个路子。
+ * 里直接 `new` 就能跑，和 `Octomap3dPcdVoxelGrid` / `Octomap3dPcdNavSurface` 一个路子。
  */
-class OctoMapPathPlanner {
+class Octomap3dPcdPathPlanner {
     /** 上一次建的表面图，键见 {@link navSurface}。 */
     surface = null;
     surfaceKey = null;
@@ -2719,7 +2719,7 @@ class OctoMapPathPlanner {
      * 也判成悬空。
      *
      * `'cloudFit'` 必须覆盖它：填充过的空列读的是**局部**地板高度，上面那条等价关系就
-     * 断了（见 {@link OctoMapPathCloudFitController.islandFloatMargin}）。
+     * 断了（见 {@link Octomap3dPcdPathCloudFit.islandFloatMargin}）。
      */
     islandFloatMargin(cell, _step) {
         return cell;
@@ -2728,7 +2728,7 @@ class OctoMapPathPlanner {
      * 规划一条从 `start` 到 `goal`（世界坐标）的路线，避开所有占用的体素。
      *
      * 步骤是：建表面图 → 起终点各吸附到一个能站的节点 → 在节点图上 A* → 落回世界
-     * 坐标 → 拉直。前两步和第三步都在 `OctoMapNavSurface` 里，落回坐标与拉直在这里。
+     * 坐标 → 拉直。前两步和第三步都在 `Octomap3dPcdNavSurface` 里，落回坐标与拉直在这里。
      *
      * 这里**什么都不记在实例上**（除了表面图缓存）：结果整份返回，由调用方决定怎么
      * 用它。所以同一个规划器可以被连着调、被两个不同的起点终点交叉调，互不干扰。
@@ -2848,7 +2848,7 @@ class OctoMapPathPlanner {
             }
             else if (lowest > req.groundLevel + this.islandFloatMargin(cell, step) &&
                 // 还得**确认真的是小狗站在那儿**：搜索是从碰撞体前方的探测点起算的（见
-                // `OctoMapController.findPath` 里的 frontPosition），它可能落在小狗旁边的一级
+                // `Octomap3dPcd.findPath` 里的 frontPosition），它可能落在小狗旁边的一级
                 // 台沿上——小狗自己站在地板上，探测点却在 0.52 m 的坎上。那时按这个探测点报
                 // 「小狗站在离地 0.52 m 的地方」是在说一件用户看不见的事，而原来的「差 X m」
                 // 才是对的（量过：真图上就有两条这样的行，两种口径差 0.48 m）。
@@ -2865,7 +2865,7 @@ class OctoMapPathPlanner {
                 // 报的是**小狗自己离地多高**（`start[1]`，用户眼睛看到的那个高度），不是终点与
                 // 哪个面的差：这种情形里两头齐平，差出来接近 0，说了等于没说。而这个数是「它在
                 // 多高的地方下不来」，**不是**滑杆该拖到的位置——真图上量过（见
-                // `OctoMapPathController.dogStuck`）：要 0.69~0.77 m 才通，小狗离地却只有
+                // `Octomap3dPcdPath.dogStuck`）：要 0.69~0.77 m 才通，小狗离地却只有
                 // 0.50~0.71 m，照着这个数拖滑杆大多还是不通；把它挪到 0.6 m 内的地面上则 8/8
                 // 都通。所以这个数只作说明，提示里给的建议是挪狗。
                 //
@@ -2909,7 +2909,7 @@ class OctoMapPathPlanner {
      * 代价函数修不了它：补一条「转弯要加钱」的边权需要 (节点 × 来向) 的搜索状态，而这条
      * 折线是要**给小狗走路**的（狗按每一段定朝向），所以锯齿在观感上就是狗头在抖。改为在
      * **输出之后**加一道形状判据：直线扫过去不碰东西，就把那一段锯齿整段删掉。跳过的每个
-     * 顶点仍然用它后面的邻点保证过——{@link OctoMapNavSurface.segmentClear} 就是那条判据。
+     * 顶点仍然用它后面的邻点保证过——{@link Octomap3dPcdNavSurface.segmentClear} 就是那条判据。
      *
      * 保留的第一个点是 A* 的起点（小狗身前那个探测点），最后一个点是终点；中间的锯齿都是
      * 等价的走法，换掉不影响「这条路能不能走」。**代价也不再是最优的那条**：拉直只会让
@@ -2986,12 +2986,12 @@ class OctoMapPathPlanner {
      *
      * `build` 要遍历一遍点云、再逐列排序，是这条链路上最贵的一步；而拖「碰撞半径」、
      * 「通行高度」这些滑块时点云一动没动。缓存键因此取**点云数组的身份**加上网格本身
-     * 的参数：点云换了，`OctoMapController.rebuild()` 会把 `positions` 换成新引用，
+     * 的参数：点云换了，`Octomap3dPcd.rebuild()` 会把 `positions` 换成新引用，
      * 键自然失效；网格随起终点或边距变化（见 `navGridSize`）时格数与原点一变，
      * 也一样失效。
      *
      * 小狗参数（跨越高度、碰撞半径、禁行列…）**不在键里**：它们走
-     * {@link OctoMapNavSurface.configure}，那一步只重算可站判定，比重建便宜得多。
+     * {@link Octomap3dPcdNavSurface.configure}，那一步只重算可站判定，比重建便宜得多。
      *
      * 缓存挂在**实例**上，所以每个算法各持一份：`'surfaceGraph'` 和 `'cloudFit'` 建出来
      * 的表面图本来就不同，键里不需要再放算法名。代价是同时用过两种算法时两份都常驻
@@ -3028,7 +3028,7 @@ class OctoMapPathPlanner {
      * 体素的高度。
      *
      * 直接遍历 `grid.forbidden` 而不是遍历全部体素再筛：它是 `cells` 的子集（见
-     * `OctoMapVoxelGrid.remove`），刷满场时两者一样，没刷过时这个是零成本。
+     * `Octomap3dPcdVoxelGrid.remove`），刷满场时两者一样，没刷过时这个是零成本。
      */
     bannedColumns(grid, nx, nz, minX, minZ, cell) {
         if (grid.forbidden.size === 0) {
@@ -3187,9 +3187,9 @@ class OctoMapPathPlanner {
 
 /**
  * 第二种寻路：表面图还是同一张，只是**虚拟地面不用常数了**——每个没点的列从切比雪夫
- * 距离最近的、有点的列认领它的面高（见 `OctoMapNavSurface.build` 的 `fillFromNeighbors`）。
+ * 距离最近的、有点的列认领它的面高（见 `Octomap3dPcdNavSurface.build` 的 `fillFromNeighbors`）。
  *
- * 与 {@link OctoMapPathSurfaceGraphController} 的关系是**只差建图这一步**：搜索、平滑、
+ * 与 {@link Octomap3dPcdPathSurfaceGraph} 的关系是**只差建图这一步**：搜索、平滑、
  * 起终点吸附、失败判定全是基类那一份。要不要它取决于用户想量哪件事——`'surfaceGraph'`
  * 答的是「在名义地面上怎么走」，它答的是「**在云点这张面上**怎么走」，于是铲平坑洼、
  * 补全一片云点会直接反映到路线上。
@@ -3204,11 +3204,11 @@ class OctoMapPathPlanner {
  *   上移，于是哪些家具开始挡路会变（`q:\tmp` 上量过的那道悬崖，见 nav-wall-band-cliff）。
  *   这是这个算法**想要**的后果，但它意味着路线会与另一档不同，不算回归。
  */
-class OctoMapPathCloudFitController extends OctoMapPathPlanner {
+class Octomap3dPcdPathCloudFit extends Octomap3dPcdPathPlanner {
     algorithm = 'cloudFit';
     /** 与基类的差别只有那个 `true`：打开「空列从邻居取面高」。 */
     buildSurface(positions, nx, nz, minX, minZ, cell, groundLevel, fillBaseCells) {
-        return OctoMapNavSurface.build(positions, nx, nz, minX, minZ, cell, groundLevel, true, fillBaseCells);
+        return Octomap3dPcdNavSurface.build(positions, nx, nz, minX, minZ, cell, groundLevel, true, fillBaseCells);
     }
     /**
      * 门槛从「一格」换成「一个跨越高度」，因为填充把基类那条前提拿掉了：
@@ -3234,7 +3234,7 @@ class OctoMapPathCloudFitController extends OctoMapPathPlanner {
 /**
  * 现有那条寻路：**每列一个常数虚拟地面**的表面图上做 A*。
  *
- * 这是从 `OctoMapPathController` 里原样搬过来的那一套，行为一个字节没动（重构前后
+ * 这是从 `Octomap3dPcdPath` 里原样搬过来的那一套，行为一个字节没动（重构前后
  * 的真图基线逐点相同，见 `q:\tmp\path-baseline.mjs`）。保留它不只是为了对照：它带来
  * 的两件事是别的建图方式不好替代的——空列一定有节点（`groundExtendsOutside` 因此
  * 能工作，小狗可以绕到建筑外面去），以及平面上的代价处处相同（因此不会为了抄近路
@@ -3243,7 +3243,7 @@ class OctoMapPathCloudFitController extends OctoMapPathPlanner {
  * 它的代价则记在 {@link OctoMapPathAlgorithm} 上：那些虚拟地面 run 的高度是个**常数**，
  * 跟它旁边有没有地板无关。
  */
-class OctoMapPathSurfaceGraphController extends OctoMapPathPlanner {
+class Octomap3dPcdPathSurfaceGraph extends Octomap3dPcdPathPlanner {
     algorithm = 'surfaceGraph';
     /**
      * 末位那个 `fillBaseCells` **收下但不用**：这一档根本不填（`fillFromNeighbors` 关着），
@@ -3251,7 +3251,7 @@ class OctoMapPathSurfaceGraphController extends OctoMapPathPlanner {
      * 签名——按算法的实际需要收参数，比在基类上开一个「哪些算法用得上」的开关干净。
      */
     buildSurface(positions, nx, nz, minX, minZ, cell, groundLevel, _fillBaseCells) {
-        return OctoMapNavSurface.build(positions, nx, nz, minX, minZ, cell, groundLevel);
+        return Octomap3dPcdNavSurface.build(positions, nx, nz, minX, minZ, cell, groundLevel);
     }
 }
 
@@ -3296,7 +3296,7 @@ const NAV_LIMIT_EXCEEDED_COLOR = '#d946ef';
 /**
  * 持有导航终点、渲染出的路径，以及**这一次**规划的失败缘由。
  *
- * 规划本身**不在这里**：真正搜路的是一组 `OctoMapPathPlanner`，按
+ * 规划本身**不在这里**：真正搜路的是一组 `Octomap3dPcdPathPlanner`，按
  * {@link OctoMapMapSettings.pathAlgorithm} 选一个（见 {@link setAlgorithm}）。这个类
  * 是它们的外壳，管三件事：
  *
@@ -3311,10 +3311,10 @@ const NAV_LIMIT_EXCEEDED_COLOR = '#d946ef';
  * 而搜索、平滑、起终点吸附那一套与它无关、且各自都有一堆量出来的坑，不该跟着复制。
  *
  * 不变的部分是每一步的「站不站得住」判据（「身子那一带不许有几何」，从**脚下的那个
- * 面**起量而不是从地面起量，见 `OctoMapNavSurface.standable`），以及一个旋钮同时管住
+ * 面**起量而不是从地面起量，见 `Octomap3dPcdNavSurface.standable`），以及一个旋钮同时管住
  * 上爬和下跳这件事。
  */
-class OctoMapPathController {
+class Octomap3dPcdPath {
     global;
     /** 发出路径点数量（0 = 未找到，null = 已清除）。 */
     pathChanged = new Subject();
@@ -3330,10 +3330,10 @@ class OctoMapPathController {
     goalPosition = null;
     /**
      * 终点的接受范围半径。规划器**不用**它——它只决定「算出来的路径算不算成功」，
-     * 由 {@link OctoMapController.findPath} 读取判定，同时也是圆环的画法尺寸。
+     * 由 {@link Octomap3dPcd.findPath} 读取判定，同时也是圆环的画法尺寸。
      * 与 {@link goalPosition} 一样公开只读：改它走 {@link setGoalRadius}。
      *
-     * 初值直接取默认设置，不抄字面量：`OctoMapComponent.ngOnChanges` 在首次绑定
+     * 初值直接取默认设置，不抄字面量：`Octomap3dPcdComponent.ngOnChanges` 在首次绑定
      * 时因为 `viewInitialized` 还是 false 而整个跳过，所以这里**必须**等于默认值，
      * 否则用户没动过这一项时就悄悄用了另一个数。
      */
@@ -3344,10 +3344,10 @@ class OctoMapPathController {
      *
      * 和 {@link goalRadius} 一样是**字段**而不是 {@link computePath} 的第 12 个位置参数：
      * 那个签名有「十一个位置参数、一条不增删」的约定（它被 spec 里的 `null as never` 和
-     * `octo-map-path-straight.cases.ts` 依赖着），而这个设置与「这次查询用什么参数」不同，
+     * `octomap-3d-pcd-path-straight.cases.ts` 依赖着），而这个设置与「这次查询用什么参数」不同，
      * 它是「这张表面图怎么建」——建完就缓存在规划器上，不进每次调用的参数表。
      *
-     * 初值直接取默认设置，不抄字面量：`OctoMapComponent.ngOnChanges` 在首次绑定时因为
+     * 初值直接取默认设置，不抄字面量：`Octomap3dPcdComponent.ngOnChanges` 在首次绑定时因为
      * `viewInitialized` 还是 false 而整个跳过，所以这里**必须**等于默认值，否则用户没动过
      * 这一项时就悄悄用了另一个数。
      */
@@ -3416,7 +3416,7 @@ class OctoMapPathController {
      * 调用方报 `'gap'` / `'dogStuck'` / `'goalTooHigh'` 里的哪一个——三者的建议不同，
      * 见 {@link failedReason}。
      *
-     * 判据（放在 `OctoMapPathPlanner.plan` 里，只有那儿同时拿得到终点、列顶与跨越高度）
+     * 判据（放在 `Octomap3dPcdPathPlanner.plan` 里，只有那儿同时拿得到终点、列顶与跨越高度）
      * 是两条**与**关系：终点落脚的那个节点比终点低了一次跨越高度还多，**且**终点比那一列
      * 最高的面还高出一格。第二条是防误伤的那一条：点墙面时终点远高于它落到的地面、恒有
      * 第一条成立，但那时列顶（那堵墙）比终点高，第二条不成立——所以这个开关不会把「点墙
@@ -3430,13 +3430,13 @@ class OctoMapPathController {
     goalTooHigh = false;
     /**
      * 终点**有面接着**吗——它的 Y 落在那一列最高的那个面上（含一格容差）。与
-     * {@link heightGap} 一样每次调用都会重写，由 `OctoMapPathPlanner.plan` 交付。
+     * {@link heightGap} 一样每次调用都会重写，由 `Octomap3dPcdPathPlanner.plan` 交付。
      *
-     * {@link OctoMapController.findPath} 拿它决定**接受范围量几维**：没有面接着终点时
+     * {@link Octomap3dPcd.findPath} 拿它决定**接受范围量几维**：没有面接着终点时
      * 量三维（终点浮在半空，路径末端必须真的走到那个点上，停在正下方不算到），有面接着
      * 时只量水平（点墙面、点桌面这一类命中里，路径末端本来就该落在终点脚下的那个面上，
      * 竖直那一维归落差判据管）。理由详见那个方法，以及
-     * `OctoMapPathPlanner` 里 `goalOnFace` 的注释。
+     * `Octomap3dPcdPathPlanner` 里 `goalOnFace` 的注释。
      *
      * 它同时也是范围指示物的画法依据，见 {@link resizeGoalMarkers}。
      */
@@ -3544,7 +3544,7 @@ class OctoMapPathController {
     /**
      * 记住当前点云的范围（以及它贴着的那层地面），据此重画规划上限范围的边界线。
      *
-     * 由 `OctoMapController.rebuild()` 在点云变化后调用，跟 `alignGrid` / 地面平面
+     * 由 `Octomap3dPcd.rebuild()` 在点云变化后调用，跟 `alignGrid` / 地面平面
      * 是同一时机——三者都是「场景换了、参考物跟着换」。
      */
     setBounds(bbox, groundLevel) {
@@ -3715,7 +3715,7 @@ class OctoMapPathController {
      * 设置「填充基准范围」（单位：格）。
      *
      * 只记下来，**不重建表面图**：建图是 `plan()` 里按需做的，而这里正是它的缓存键里
-     * 的一项（见 `OctoMapPathPlanner.navSurface`）——下次点「找路径」时键一对不上就自然
+     * 的一项（见 `Octomap3dPcdPathPlanner.navSurface`）——下次点「找路径」时键一对不上就自然
      * 重建，代价落在真正需要它的那一次调用上，而不是拖滑杆的每一帧上。
      *
      * 参数没变就直接返回：设置面板上任何一项改动都会走到这里。
@@ -3766,7 +3766,7 @@ class OctoMapPathController {
      * `distance` 是路径末端到终点的距离，只有 `outOfRange` 有；另外两种压根没算出
      * 路径（或算了也没走到），无从谈起，传 null。落差（`gap`）直接读
      * {@link heightGap}，不从参数过——调用方必须紧接着 `computePath` 调它，否则
-     * 读到的是上一次的落差。眼下的唯一调用方 `OctoMapController.findPath` 就是这个
+     * 读到的是上一次的落差。眼下的唯一调用方 `Octomap3dPcd.findPath` 就是这个
      * 顺序。
      *
      * 两个事件都在这里发，是「我们失败了」的**唯一出口**。顺序有讲究：父组件的
@@ -3791,14 +3791,14 @@ class OctoMapPathController {
      * `crossWidth` 是「跨越宽度」（见 {@link OctoMapMapSettings.crossWidth}）：无支撑的
      * 那一段不超过它就允许一步跨过去，0 表示只走相邻格。
      *
-     * `groundLevel` 是扫描出的地板高度，由点云那一侧（`OctoMapGrilleController`）
+     * `groundLevel` 是扫描出的地板高度，由点云那一侧（`Octomap3dPcdGrille`）
      * 算好传进来：地面平面和参考网格用的也是同一个值，路径因此画在可见的地面上，
      * 而不是世界原点那一层。没有点的那一列按它补出来——**这是 `'surfaceGraph'` 的
      * 说法**，别的算法可以拿它当「附近没有源时才用的兜底」（见 `OctoMapPathAlgorithm`）。
      *
      * 签名保持**十一个位置参数**、一条不增删：这个类的构造签名和它一起被 spec 里的
      * `null as never` 依赖着，改成对象会牵动一堆无关分支。真正的请求对象在
-     * {@link OctoMapPathPlanner.plan} 那一层。
+     * {@link Octomap3dPcdPathPlanner.plan} 那一层。
      *
      * 这里只做四件事：算网格参数、判上限、转发给当前算法、把失败标志抄回来。**建表面图
      * 与搜索都在规划器里**（见 {@link planner}）——它们的每一处阈值都是量出来的，而
@@ -4114,18 +4114,18 @@ class OctoMapPathController {
         // 珠子归折线这一家：`clearLine` / `dispose` 都从这里过，拆解点只有这一个。
         this.disposePathPointMarkers();
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapPathController, deps: [{ token: OctoMapGlobalController }], target: i0.ɵɵFactoryTarget.Injectable });
-    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapPathController });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdPath, deps: [{ token: Octomap3dPcdGlobal }], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdPath });
 }
-i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapPathController, decorators: [{
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdPath, decorators: [{
             type: Injectable
-        }], ctorParameters: () => [{ type: OctoMapGlobalController }] });
+        }], ctorParameters: () => [{ type: Octomap3dPcdGlobal }] });
 /**
  * 按算法建规划器。新的寻路方式在**这里**加一支，其余地方一行不动——外壳只认
- * {@link OctoMapPathPlanner} 这个抽象，不认具体是哪一个。
+ * {@link Octomap3dPcdPathPlanner} 这个抽象，不认具体是哪一个。
  *
  * 写成模块级函数而不是外壳的方法：它是构造期的一次分派，跟这个实例的状态无关，
- * 也就没有理由为了它去实例化一个 `OctoMapPathController`。
+ * 也就没有理由为了它去实例化一个 `Octomap3dPcdPath`。
  *
  * `default` 兜底回 `'surfaceGraph'` 而不是抛错：算法名可能来自配置文件
  * （`octomap.config.json`），那里写错一个词不该让寻路整个炸掉——退回默认的那套
@@ -4135,11 +4135,11 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImpo
 function createPlanner(algorithm) {
     switch (algorithm) {
         case 'surfaceGraph':
-            return new OctoMapPathSurfaceGraphController();
+            return new Octomap3dPcdPathSurfaceGraph();
         case 'cloudFit':
-            return new OctoMapPathCloudFitController();
+            return new Octomap3dPcdPathCloudFit();
         default:
-            return new OctoMapPathSurfaceGraphController();
+            return new Octomap3dPcdPathSurfaceGraph();
     }
 }
 
@@ -4147,7 +4147,7 @@ function createPlanner(algorithm) {
  * 点云「地板」的纯函数。
  *
  * 单独成文件是因为它有两个消费者：地图拿它定地面平面 / 参考网格 / 寻路阈值的高度
- * 基准（`OctoMapGrilleController.groundLevel`），宿主拿它算「贴合地面」该挪多少
+ * 基准（`Octomap3dPcdGrille.groundLevel`），宿主拿它算「贴合地面」该挪多少
  * （`SystemManagerComponent.alignCloudTranslation`）。两边必须是**同一条规则**——
  * 差一厘米，按那一下按钮就会把云挪出一厘米。
  */
@@ -4181,7 +4181,7 @@ function cloudFloorY(positions) {
  * 上限各自漂移：抽稀结果超过它，查看器同样会拒绝。
  *
  * 查看器自己遇到超限不再直接报错：它把格边长翻倍重试，直到落进这个数以内
- * （见 `octo-map-point.controller.ts` 的 `buildVoxels`），并在工具栏说明实际用了哪一档。
+ * （见 `octomap-3d-pcd-point.controller.ts` 的 `buildVoxels`），并在工具栏说明实际用了哪一档。
  */
 const MAX_VOXEL_COUNT = 2_000_000;
 /**
@@ -4359,7 +4359,7 @@ function growFloat64(source, capacity) {
  * 单元用紧凑的 `${ix},${iy},${iz}` 键寻址；单元的世界
  * 坐标位置由{@link min} + {@link voxelSize} 推导。
  */
-class OctoMapVoxelGrid {
+class Octomap3dPcdVoxelGrid {
     /** 网格最小角的世界坐标位置（与点云边界一致）。 */
     min;
     /** 一个体素的边长（世界单位）。 */
@@ -4381,14 +4381,14 @@ class OctoMapVoxelGrid {
         return { ix, iy, iz };
     }
     add(ix, iy, iz, instanceId, baseColor) {
-        const key = OctoMapVoxelGrid.key(ix, iy, iz);
+        const key = Octomap3dPcdVoxelGrid.key(ix, iy, iz);
         this.cells.set(key, instanceId);
         this.byInstance.set(instanceId, key);
         this.baseColors.set(key, baseColor);
     }
     /** 添加一个单元（已存在时不做任何事），返回其键。 */
     addCell(ix, iy, iz, baseColor) {
-        const key = OctoMapVoxelGrid.key(ix, iy, iz);
+        const key = Octomap3dPcdVoxelGrid.key(ix, iy, iz);
         if (this.cells.has(key)) {
             return key;
         }
@@ -4442,7 +4442,7 @@ class OctoMapVoxelGrid {
     }
     /** 单元的世界坐标中心。 */
     center(key) {
-        const { ix, iy, iz } = OctoMapVoxelGrid.parse(key);
+        const { ix, iy, iz } = Octomap3dPcdVoxelGrid.parse(key);
         return [
             this.min[0] + (ix + 0.5) * this.voxelSize,
             this.min[1] + (iy + 0.5) * this.voxelSize,
@@ -4462,7 +4462,7 @@ class OctoMapVoxelGrid {
                         if (Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz)) !== r) {
                             continue;
                         }
-                        const key = OctoMapVoxelGrid.key(ix + dx, iy + dy, iz + dz);
+                        const key = Octomap3dPcdVoxelGrid.key(ix + dx, iy + dy, iz + dz);
                         if (this.cells.has(key)) {
                             return key;
                         }
@@ -4474,7 +4474,7 @@ class OctoMapVoxelGrid {
     }
     /** 一个单元的 26 邻接占用邻居。 */
     neighbors(key) {
-        const { ix, iy, iz } = OctoMapVoxelGrid.parse(key);
+        const { ix, iy, iz } = Octomap3dPcdVoxelGrid.parse(key);
         const result = [];
         for (let dx = -1; dx <= 1; dx++) {
             for (let dy = -1; dy <= 1; dy++) {
@@ -4482,7 +4482,7 @@ class OctoMapVoxelGrid {
                     if (dx === 0 && dy === 0 && dz === 0) {
                         continue;
                     }
-                    const neighbor = OctoMapVoxelGrid.key(ix + dx, iy + dy, iz + dz);
+                    const neighbor = Octomap3dPcdVoxelGrid.key(ix + dx, iy + dy, iz + dz);
                     if (this.cells.has(neighbor)) {
                         result.push(neighbor);
                     }
@@ -4511,7 +4511,7 @@ const MAX_VOXEL_FIT_STEPS = 8;
  * 负责渲染出的点云/体素网格以及射线拾取与刷交互。
  * 所有针对“点”的操作都在这里。
  */
-class OctoMapGrilleController {
+class Octomap3dPcdGrille {
     global;
     pointsChanged = new Subject();
     pointClicked = new Subject();
@@ -4535,7 +4535,7 @@ class OctoMapGrilleController {
      * 参考物（灰色地面平面、参考网格）锚在哪个世界 Y；还没锚定时为 null。
      *
      * 与 {@link groundLevel} 的差别就是「跟不跟着云走」：那个每次重建都重算，这个是
-     * 锚定那一刻的快照（见 `OctoMapGlobalController.anchorReference`）。由
+     * 锚定那一刻的快照（见 `Octomap3dPcdGlobal.anchorReference`）。由
      * {@link setReferenceLevel} 回填——它得等这个控制器交出包围盒和新地板高度之后才
      * 定得下来，所以比 {@link groundLevel} 晚一步。
      */
@@ -4715,7 +4715,7 @@ class OctoMapGrilleController {
             const ix = Math.floor((positions[p] - min[0]) / voxelSize);
             const iy = Math.floor((positions[p + 1] - min[1]) / voxelSize);
             const iz = Math.floor((positions[p + 2] - min[2]) / voxelSize);
-            const instanceId = grid.instanceId(OctoMapVoxelGrid.key(ix, iy, iz));
+            const instanceId = grid.instanceId(Octomap3dPcdVoxelGrid.key(ix, iy, iz));
             if (instanceId === undefined || seen.has(instanceId)) {
                 continue;
             }
@@ -4830,7 +4830,7 @@ class OctoMapGrilleController {
                     if (dx * dx + dy * dy + dz * dz > r * r) {
                         continue;
                     }
-                    const key = OctoMapVoxelGrid.key(ix + dx, iy + dy, iz + dz);
+                    const key = Octomap3dPcdVoxelGrid.key(ix + dx, iy + dy, iz + dz);
                     if (!this.grid.has(key)) {
                         continue;
                     }
@@ -4875,7 +4875,7 @@ class OctoMapGrilleController {
                     if (dx * dx + dy * dy + dz * dz > r * r) {
                         continue;
                     }
-                    const key = OctoMapVoxelGrid.key(ix + dx, iy + dy, iz + dz);
+                    const key = Octomap3dPcdVoxelGrid.key(ix + dx, iy + dy, iz + dz);
                     if (!this.grid.has(key)) {
                         continue;
                     }
@@ -4945,7 +4945,7 @@ class OctoMapGrilleController {
             return;
         }
         const { ix, iy, iz } = this.grid.worldToVoxel(world[0], world[1], world[2]);
-        const key = OctoMapVoxelGrid.key(ix, iy, iz);
+        const key = Octomap3dPcdVoxelGrid.key(ix, iy, iz);
         if (this.grid.has(key)) {
             return;
         }
@@ -4975,7 +4975,7 @@ class OctoMapGrilleController {
             return;
         }
         const { ix, iy, iz } = this.grid.worldToVoxel(world[0], world[1], world[2]);
-        const newKey = OctoMapVoxelGrid.key(ix, iy, iz);
+        const newKey = Octomap3dPcdVoxelGrid.key(ix, iy, iz);
         if (newKey === key) {
             return;
         }
@@ -5101,7 +5101,7 @@ class OctoMapGrilleController {
         }
         const vs = this.grid.voxelSize;
         const { ix, iy, iz } = this.grid.worldToVoxel(world[0], world[1], world[2]);
-        const center = this.grid.center(OctoMapVoxelGrid.key(ix, iy, iz));
+        const center = this.grid.center(Octomap3dPcdVoxelGrid.key(ix, iy, iz));
         if (!this.previewMesh) {
             const geometry = new THREE.BoxGeometry(1, 1, 1);
             const material = new THREE.MeshBasicMaterial({
@@ -5242,7 +5242,7 @@ class OctoMapGrilleController {
      *
      * Y 取的是**点云自己的地板**（{@link groundLevel}）而不是平面那一片的高度：平面
      * 是钉在锚点上的参考物，把云整体抬高/降低之后它不会跟着走（见
-     * `OctoMapGlobalController.anchorReference`），而放狗要落在云上、不是落在那块
+     * `Octomap3dPcdGlobal.anchorReference`），而放狗要落在云上、不是落在那块
      * 参考面上。两者平时就是同一个高度（平面当初就贴在地板上），只有平移过之后才
      * 分得开。
      */
@@ -5481,7 +5481,7 @@ class OctoMapGrilleController {
         this.requestedVoxelSize = requested;
         // 构建常驻网格，当网格的分辨率与原点不变时（例如仅颜色变化），
         // 沿用原有的禁行单元。
-        const grid = new OctoMapVoxelGrid(min, voxelSize);
+        const grid = new Octomap3dPcdVoxelGrid(min, voxelSize);
         for (const key of this.carryForbidden(voxelSize, min)) {
             grid.forbidden.add(key);
         }
@@ -5498,7 +5498,7 @@ class OctoMapGrilleController {
         cells.forEach((cell) => {
             matrix.makeTranslation(min[0] + (cell.ix + 0.5) * voxelSize, min[1] + (cell.iy + 0.5) * voxelSize, min[2] + (cell.iz + 0.5) * voxelSize);
             mesh.setMatrixAt(index, matrix);
-            const key = OctoMapVoxelGrid.key(cell.ix, cell.iy, cell.iz);
+            const key = Octomap3dPcdVoxelGrid.key(cell.ix, cell.iy, cell.iz);
             const base = colors
                 ? [cell.r / cell.n, cell.g / cell.n, cell.b / cell.n]
                 : [fallback.r, fallback.g, fallback.b];
@@ -5532,7 +5532,7 @@ class OctoMapGrilleController {
             const ix = Math.floor((positions[i] - min[0]) / voxelSize);
             const iy = Math.floor((positions[i + 1] - min[1]) / voxelSize);
             const iz = Math.floor((positions[i + 2] - min[2]) / voxelSize);
-            const key = OctoMapVoxelGrid.key(ix, iy, iz);
+            const key = Octomap3dPcdVoxelGrid.key(ix, iy, iz);
             let cell = cells.get(key);
             if (!cell) {
                 cell = { ix, iy, iz, r: 0, g: 0, b: 0, n: 0 };
@@ -5600,7 +5600,7 @@ class OctoMapGrilleController {
         if (!this.grid || !this.positions) {
             return;
         }
-        const { ix, iy, iz } = OctoMapVoxelGrid.parse(key);
+        const { ix, iy, iz } = Octomap3dPcdVoxelGrid.parse(key);
         const min = this.grid.min;
         const vs = this.grid.voxelSize;
         const x0 = min[0] + ix * vs;
@@ -5743,7 +5743,7 @@ class OctoMapGrilleController {
         };
     }
     /**
-     * 回填参考物的锚高（由 `OctoMapController.rebuild` 在锚定之后调用）。
+     * 回填参考物的锚高（由 `Octomap3dPcd.rebuild` 在锚定之后调用）。
      *
      * 变了就**再发一次** `pointsChanged`：锚点要等这个控制器交出包围盒和新地板高度才
      * 定得下来，所以 `rebuild` 里那次 `emitPointsChanged` 带的还是上一轮的值（或
@@ -5766,19 +5766,19 @@ class OctoMapGrilleController {
             requestedVoxelSize: this.requestedVoxelSize,
         });
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapGrilleController, deps: [{ token: OctoMapGlobalController }], target: i0.ɵɵFactoryTarget.Injectable });
-    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapGrilleController });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdGrille, deps: [{ token: Octomap3dPcdGlobal }], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdGrille });
 }
-i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapGrilleController, decorators: [{
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdGrille, decorators: [{
             type: Injectable
-        }], ctorParameters: () => [{ type: OctoMapGlobalController }] });
+        }], ctorParameters: () => [{ type: Octomap3dPcdGlobal }] });
 
 /**
- * 将场景级（{@link OctoMapGlobalController}）、点相关（{@link OctoMapGrilleController}）、
- * 导航（{@link OctoMapPathController}）和小狗（{@link OctoMapDogController}）
+ * 将场景级（{@link Octomap3dPcdGlobal}）、点相关（{@link Octomap3dPcdGrille}）、
+ * 导航（{@link Octomap3dPcdPath}）和小狗（{@link Octomap3dPcdDog}）
  * 控制器串联成一个门面，使组件只需调用这里，而不必自己把它们接在一起。
  */
-class OctoMapController {
+class Octomap3dPcd {
     grille;
     global;
     dog;
@@ -5828,7 +5828,7 @@ class OctoMapController {
     }
     /**
      * 在体素中心周围刷上障碍。返回值原样来自
-     * {@link OctoMapPointController.brushAt}——`occupied === 0` 就是「这一带没有点」，
+     * {@link Octomap3dPcdPoint.brushAt}——`occupied === 0` 就是「这一带没有点」，
      * 调用方拿它决定要不要提示（见 `OctoMapBrushMissDetail`）。
      */
     brush(center, radius, options) {
@@ -5909,7 +5909,7 @@ class OctoMapController {
         if (!points || points.length < 2) {
             this.dog.stop();
             // 报哪个原因由规划器自己定（尺寸超限 > 小狗下不来 > 终点浮空 > 终点够不着 >
-            // 搜不到，见 `OctoMapPathController.failedReason`）：那四个字段都在它手上，
+            // 搜不到，见 `Octomap3dPcdPath.failedReason`）：那四个字段都在它手上，
             // 这里只有一句话和一条折线。
             this.logPlan(start, goal, null, this.failureText(), params);
             this.path.noPath(this.path.failedReason(), null);
@@ -5929,7 +5929,7 @@ class OctoMapController {
         // 立面上的原始命中点）：那时路径末端本来就该落在终点脚下的那个面上，竖直那一
         // 维归上面那条「落差」判据管——量三维会把「点墙面」这个常见手势一律判失败。
         // 两个分支与规划器里 `goalTooHigh` 那两条判据同源，见
-        // `OctoMapPathPlanner` 的 `goalOnFace`。
+        // `Octomap3dPcdPathPlanner` 的 `goalOnFace`。
         const end = points[points.length - 1];
         const distance = this.path.goalOnFace
             ? Math.hypot(end[0] - goal[0], end[2] - goal[2])
@@ -6006,7 +6006,7 @@ class OctoMapController {
      *
      * 界面上那几句文案在 `SystemManagerComponent` 里（要带操作建议，是给用户看的）；
      * 这里只求排查时一眼认得，所以短。数从
-     * {@link OctoMapPathController.heightGap} 现取——它紧跟着 `computePath` 才有效。
+     * {@link Octomap3dPcdPath.heightGap} 现取——它紧跟着 `computePath` 才有效。
      */
     failureText() {
         const gap = this.path.heightGap ?? 0;
@@ -6079,18 +6079,18 @@ class OctoMapController {
         this.path.dispose();
         this.global.dispose();
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapController, deps: [{ token: OctoMapGrilleController }, { token: OctoMapGlobalController }, { token: OctoMapDogController }, { token: OctoMapPathController }], target: i0.ɵɵFactoryTarget.Injectable });
-    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapController });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcd, deps: [{ token: Octomap3dPcdGrille }, { token: Octomap3dPcdGlobal }, { token: Octomap3dPcdDog }, { token: Octomap3dPcdPath }], target: i0.ɵɵFactoryTarget.Injectable });
+    static ɵprov = i0.ɵɵngDeclareInjectable({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcd });
 }
-i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapController, decorators: [{
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcd, decorators: [{
             type: Injectable
-        }], ctorParameters: () => [{ type: OctoMapGrilleController }, { type: OctoMapGlobalController }, { type: OctoMapDogController }, { type: OctoMapPathController }] });
-const OctoMapControllerProviders = [
-    OctoMapGrilleController,
-    OctoMapGlobalController,
-    OctoMapDogController,
-    OctoMapPathController,
-    OctoMapController,
+        }], ctorParameters: () => [{ type: Octomap3dPcdGrille }, { type: Octomap3dPcdGlobal }, { type: Octomap3dPcdDog }, { type: Octomap3dPcdPath }] });
+const Octomap3dPcdProviders = [
+    Octomap3dPcdGrille,
+    Octomap3dPcdGlobal,
+    Octomap3dPcdDog,
+    Octomap3dPcdPath,
+    Octomap3dPcd,
 ];
 
 const DEFAULT_BACKGROUND = '#0b1016';
@@ -6116,7 +6116,7 @@ function isSameHover(a, b) {
  * 组件本身只是一层薄外观：把参数和 DOM 事件转发给控制器，再把控制器的事件转发出去——
  * 所有渲染逻辑都在 `controller/` 里。
  */
-class OctoMapComponent {
+class Octomap3dPcdComponent {
     viewportRef;
     /** 要渲染的点云。传 null 清空视口。 */
     points = null;
@@ -6126,7 +6126,7 @@ class OctoMapComponent {
      *
      * 多份点云拼成了一份渲染对象（手柄只该动其中一份），整份对象一挪会把别的云也
      * 带走，所以这里只动选中那一份：体素模式改写它占的那些实例矩阵，点云模式重画一份
-     * 世界。与普通的 `points` 换新**刻意不同**：不走 {@link OctoMapController.rebuild}，
+     * 世界。与普通的 `points` 换新**刻意不同**：不走 {@link Octomap3dPcd.rebuild}，
      * 于是包围盒、地板高度、网格与地面、导航边界、手柄位姿都不动——拖动过程中世界并没有
      * 真的改变，那些跟着跳只会让参考物失去参照。
      *
@@ -6426,7 +6426,7 @@ class OctoMapComponent {
      * 的这一帧标脏，不必再去碰变更检测。
      */
     hover = signal(null, ...(ngDevMode ? [{ debugName: "hover" }] : /* istanbul ignore next */ []));
-    controller = inject(OctoMapController);
+    controller = inject(Octomap3dPcd);
     subscriptions = [];
     /** 已排队的悬停探测帧；0 = 没有排队。 */
     hoverFrame = 0;
@@ -6459,7 +6459,7 @@ class OctoMapComponent {
         this.dragStartX = event.clientX;
         this.dragStartY = event.clientY;
         // 平移手柄优先。TransformControls 的 pointerdown 比这里先注册（见
-        // `OctoMapGlobalController.createMoveGizmo`），命中手柄时它已经把 `dragging`
+        // `Octomap3dPcdGlobal.createMoveGizmo`），命中手柄时它已经把 `dragging`
         // 置真——这一下得整让出去，否则按住箭头的同时还会去刷笔、抓狗或拾取。
         if (this.controller.global.gizmoDragging) {
             this.gizmoPressed = true;
@@ -6538,7 +6538,7 @@ class OctoMapComponent {
      * 排一次悬停探测（每帧最多一次）。
      *
      * 跟着 pointermove 直接拾取会把帧率拖垮：点云模式下一次射线拾取要遍历上百万个
-     * 点（见 `OctoMapGrilleController.probe`），而 pointermove 一帧能来十几个。攒到
+     * 点（见 `Octomap3dPcdGrille.probe`），而 pointermove 一帧能来十几个。攒到
      * 下一帧统一算，鼠标划得再快也只算一遍。
      */
     scheduleHover(event) {
@@ -6726,7 +6726,7 @@ class OctoMapComponent {
         }
         else if (changes['preview']) {
             // 只改画面，不重建世界：体素模式挪选中那份的实例矩阵，点云模式整份重画
-            // （见 `OctoMapGrilleController.applyPreview`）。包围盒、地板、网格与手柄都不动。
+            // （见 `Octomap3dPcdGrille.applyPreview`）。包围盒、地板、网格与手柄都不动。
             this.controller.grille.applyPreview(this.preview, this.renderOptions(), this.points);
         }
         else if (changes['renderMode'] ||
@@ -7078,12 +7078,12 @@ class OctoMapComponent {
             z: this.groundExtendZ,
         };
     }
-    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "21.2.26", type: OctoMapComponent, isStandalone: true, selector: "howell-octomap-3d-pcd", inputs: { points: "points", preview: "preview", gizmoMode: "gizmoMode", gizmoPose: "gizmoPose", selectionBox: "selectionBox", gizmoPreview: "gizmoPreview", fitOnPointsChange: "fitOnPointsChange", refitReferenceOnPointsChange: "refitReferenceOnPointsChange", gizmoReadout: "gizmoReadout", renderMode: "renderMode", voxelSize: "voxelSize", backgroundColor: "backgroundColor", pointColor: "pointColor", pointSize: "pointSize", showGrid: "showGrid", showNavLimit: "showNavLimit", showPath: "showPath", showPathPoints: "showPathPoints", gridSize: "gridSize", gridDivisions: "gridDivisions", fitView: "fitView", autoRotate: "autoRotate", showColoring: "showColoring", forbiddenColor: "forbiddenColor", painted: "painted", interactionMode: "interactionMode", brushRadius: "brushRadius", maxStepHeight: "maxStepHeight", crossWidth: "crossWidth", fillBaseCells: "fillBaseCells", goalRadius: "goalRadius", dogRadius: "dogRadius", dogHeight: "dogHeight", showDogCollision: "showDogCollision", dogScale: "dogScale", dogFitCollision: "dogFitCollision", dogModelHeading: "dogModelHeading", dogHeading: "dogHeading", maxHeight: "maxHeight", minHeight: "minHeight", groundExtendsOutside: "groundExtendsOutside", groundExtendX: "groundExtendX", groundExtendZ: "groundExtendZ", pathAlgorithm: "pathAlgorithm", maxPickingPoints: "maxPickingPoints", findPath: "findPath", startWalk: "startWalk", seekWalk: "seekWalk", pauseWalk: "pauseWalk", resumeWalk: "resumeWalk", clearDeployment: "clearDeployment", markAllObstacles: "markAllObstacles", clearObstacles: "clearObstacles", clearDogModel: "clearDogModel", loadDogModel: "loadDogModel", exportPointCloud: "exportPointCloud", regularizeCloud: "regularizeCloud", projectionSource: "projectionSource" }, outputs: { mapReady: "mapReady", pointsChanged: "pointsChanged", cloudTranslated: "cloudTranslated", cloudTranslating: "cloudTranslating", cloudRotated: "cloudRotated", cloudRotating: "cloudRotating", pointClicked: "pointClicked", pathChanged: "pathChanged", pathFailed: "pathFailed", walkProgress: "walkProgress", dogPlaced: "dogPlaced", goalPlaced: "goalPlaced", paintedChanged: "paintedChanged", brushMiss: "brushMiss", interactionModeChange: "interactionModeChange", error: "error" }, providers: [...OctoMapControllerProviders], viewQueries: [{ propertyName: "viewportRef", first: true, predicate: ["viewport"], descendants: true, static: true }], usesOnChanges: true, ngImport: i0, template: "<div #viewport class=\"octo-map__viewport\">\n  <!--\n    \u624B\u67C4\u7684\u8BFB\u6570\uFF08\u4F4D\u79FB / \u65CB\u8F6C\uFF09\u3002\u5185\u5BB9\u7531\u5BBF\u4E3B\u7ED9\uFF08\u5730\u56FE\u4E0D\u77E5\u9053\u300C\u504F\u79FB\u4E86\u591A\u5C11\u300D\u300C\u8F6C\u4E86\u591A\u5C11\u5EA6\u300D\n    \u8FD9\u79CD\u8BED\u4E49\uFF09\uFF0C\u4F4D\u7F6E\u9009\u5DE6\u4E0A\uFF1A\u53F3\u4E0B\u90A3\u5757\u662F\u60AC\u505C\u8BFB\u6570\uFF0C\u4E24\u8005\u4E0D\u80FD\u6253\u67B6\u3002\n  -->\n  @if (points && gizmoMode !== 'off' && gizmoReadout) {\n    <div class=\"octo-map__gizmo-readout\">{{ gizmoReadout }}</div>\n  }\n  @if (hover(); as info) {\n    <div class=\"octo-map__readout\">\n      <div class=\"octo-map__readout-head\">\n        {{ renderMode === 'voxel' ? '\u4F53\u7D20\u4E2D\u5FC3' : '\u4E91\u70B9' }}\n      </div>\n      <div class=\"octo-map__readout-row\">\n        <span class=\"octo-map__readout-key\">X</span>\n        <span class=\"octo-map__readout-value\">{{ info.position[0].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octo-map__readout-row\">\n        <span class=\"octo-map__readout-key\">Y</span>\n        <span class=\"octo-map__readout-value\">{{ info.position[1].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octo-map__readout-row\">\n        <span class=\"octo-map__readout-key\">Z</span>\n        <span class=\"octo-map__readout-value\">{{ info.position[2].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octo-map__readout-row\">\n        <span class=\"octo-map__readout-key\">\u79BB\u5730</span>\n        <span class=\"octo-map__readout-value\">{{ info.height.toFixed(3) }} m</span>\n      </div>\n      @if (info.forbidden !== null) {\n        <div class=\"octo-map__readout-row\">\n          <span class=\"octo-map__readout-key\">\u969C\u788D</span>\n          <span\n            class=\"octo-map__readout-value\"\n            [class.octo-map__readout-value--danger]=\"info.forbidden\"\n          >\n            {{ info.forbidden ? '\u662F' : '\u5426' }}\n          </span>\n        </div>\n      }\n    </div>\n  }\n</div>\n", styles: [":host{display:block;width:100%;height:100%}.octo-map__viewport{width:100%;height:100%;overflow:hidden;position:relative}.octo-map__viewport canvas{display:block;width:100%;height:100%}.octo-map__readout{position:absolute;right:12px;bottom:12px;z-index:1;min-width:132px;padding:8px 10px;border:1px solid #232b3a;border-radius:6px;background:#141a24e0;font-size:12px;line-height:1.6;pointer-events:none}.octo-map__readout-head{margin-bottom:4px;color:#8b98ad;font-size:11px}.octo-map__readout-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.octo-map__readout-key{color:#8b98ad}.octo-map__readout-value{color:#e6edf7;font-variant-numeric:tabular-nums}.octo-map__readout-value--danger{color:#ef4444}.octo-map__gizmo-readout{position:absolute;left:12px;top:12px;z-index:1;padding:5px 9px;border:1px solid #232b3a;border-radius:6px;background:#141a24e0;color:#e6edf7;font-size:12px;line-height:1.5;white-space:pre-line;font-variant-numeric:tabular-nums;pointer-events:none}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+    static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "21.2.26", type: Octomap3dPcdComponent, isStandalone: true, selector: "howell-octomap-3d-pcd", inputs: { points: "points", preview: "preview", gizmoMode: "gizmoMode", gizmoPose: "gizmoPose", selectionBox: "selectionBox", gizmoPreview: "gizmoPreview", fitOnPointsChange: "fitOnPointsChange", refitReferenceOnPointsChange: "refitReferenceOnPointsChange", gizmoReadout: "gizmoReadout", renderMode: "renderMode", voxelSize: "voxelSize", backgroundColor: "backgroundColor", pointColor: "pointColor", pointSize: "pointSize", showGrid: "showGrid", showNavLimit: "showNavLimit", showPath: "showPath", showPathPoints: "showPathPoints", gridSize: "gridSize", gridDivisions: "gridDivisions", fitView: "fitView", autoRotate: "autoRotate", showColoring: "showColoring", forbiddenColor: "forbiddenColor", painted: "painted", interactionMode: "interactionMode", brushRadius: "brushRadius", maxStepHeight: "maxStepHeight", crossWidth: "crossWidth", fillBaseCells: "fillBaseCells", goalRadius: "goalRadius", dogRadius: "dogRadius", dogHeight: "dogHeight", showDogCollision: "showDogCollision", dogScale: "dogScale", dogFitCollision: "dogFitCollision", dogModelHeading: "dogModelHeading", dogHeading: "dogHeading", maxHeight: "maxHeight", minHeight: "minHeight", groundExtendsOutside: "groundExtendsOutside", groundExtendX: "groundExtendX", groundExtendZ: "groundExtendZ", pathAlgorithm: "pathAlgorithm", maxPickingPoints: "maxPickingPoints", findPath: "findPath", startWalk: "startWalk", seekWalk: "seekWalk", pauseWalk: "pauseWalk", resumeWalk: "resumeWalk", clearDeployment: "clearDeployment", markAllObstacles: "markAllObstacles", clearObstacles: "clearObstacles", clearDogModel: "clearDogModel", loadDogModel: "loadDogModel", exportPointCloud: "exportPointCloud", regularizeCloud: "regularizeCloud", projectionSource: "projectionSource" }, outputs: { mapReady: "mapReady", pointsChanged: "pointsChanged", cloudTranslated: "cloudTranslated", cloudTranslating: "cloudTranslating", cloudRotated: "cloudRotated", cloudRotating: "cloudRotating", pointClicked: "pointClicked", pathChanged: "pathChanged", pathFailed: "pathFailed", walkProgress: "walkProgress", dogPlaced: "dogPlaced", goalPlaced: "goalPlaced", paintedChanged: "paintedChanged", brushMiss: "brushMiss", interactionModeChange: "interactionModeChange", error: "error" }, providers: [...Octomap3dPcdProviders], viewQueries: [{ propertyName: "viewportRef", first: true, predicate: ["viewport"], descendants: true, static: true }], usesOnChanges: true, ngImport: i0, template: "<div #viewport class=\"octomap-3d-pcd__viewport\">\n  <!--\n    \u624B\u67C4\u7684\u8BFB\u6570\uFF08\u4F4D\u79FB / \u65CB\u8F6C\uFF09\u3002\u5185\u5BB9\u7531\u5BBF\u4E3B\u7ED9\uFF08\u5730\u56FE\u4E0D\u77E5\u9053\u300C\u504F\u79FB\u4E86\u591A\u5C11\u300D\u300C\u8F6C\u4E86\u591A\u5C11\u5EA6\u300D\n    \u8FD9\u79CD\u8BED\u4E49\uFF09\uFF0C\u4F4D\u7F6E\u9009\u5DE6\u4E0A\uFF1A\u53F3\u4E0B\u90A3\u5757\u662F\u60AC\u505C\u8BFB\u6570\uFF0C\u4E24\u8005\u4E0D\u80FD\u6253\u67B6\u3002\n  -->\n  @if (points && gizmoMode !== 'off' && gizmoReadout) {\n    <div class=\"octomap-3d-pcd__gizmo-readout\">{{ gizmoReadout }}</div>\n  }\n  @if (hover(); as info) {\n    <div class=\"octomap-3d-pcd__readout\">\n      <div class=\"octomap-3d-pcd__readout-head\">\n        {{ renderMode === 'voxel' ? '\u4F53\u7D20\u4E2D\u5FC3' : '\u4E91\u70B9' }}\n      </div>\n      <div class=\"octomap-3d-pcd__readout-row\">\n        <span class=\"octomap-3d-pcd__readout-key\">X</span>\n        <span class=\"octomap-3d-pcd__readout-value\">{{ info.position[0].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octomap-3d-pcd__readout-row\">\n        <span class=\"octomap-3d-pcd__readout-key\">Y</span>\n        <span class=\"octomap-3d-pcd__readout-value\">{{ info.position[1].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octomap-3d-pcd__readout-row\">\n        <span class=\"octomap-3d-pcd__readout-key\">Z</span>\n        <span class=\"octomap-3d-pcd__readout-value\">{{ info.position[2].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octomap-3d-pcd__readout-row\">\n        <span class=\"octomap-3d-pcd__readout-key\">\u79BB\u5730</span>\n        <span class=\"octomap-3d-pcd__readout-value\">{{ info.height.toFixed(3) }} m</span>\n      </div>\n      @if (info.forbidden !== null) {\n        <div class=\"octomap-3d-pcd__readout-row\">\n          <span class=\"octomap-3d-pcd__readout-key\">\u969C\u788D</span>\n          <span\n            class=\"octomap-3d-pcd__readout-value\"\n            [class.octomap-3d-pcd__readout-value--danger]=\"info.forbidden\"\n          >\n            {{ info.forbidden ? '\u662F' : '\u5426' }}\n          </span>\n        </div>\n      }\n    </div>\n  }\n</div>\n", styles: [":host{display:block;width:100%;height:100%}.octomap-3d-pcd__viewport{width:100%;height:100%;overflow:hidden;position:relative}.octomap-3d-pcd__viewport canvas{display:block;width:100%;height:100%}.octomap-3d-pcd__readout{position:absolute;right:12px;bottom:12px;z-index:1;min-width:132px;padding:8px 10px;border:1px solid #232b3a;border-radius:6px;background:#141a24e0;font-size:12px;line-height:1.6;pointer-events:none}.octomap-3d-pcd__readout-head{margin-bottom:4px;color:#8b98ad;font-size:11px}.octomap-3d-pcd__readout-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.octomap-3d-pcd__readout-key{color:#8b98ad}.octomap-3d-pcd__readout-value{color:#e6edf7;font-variant-numeric:tabular-nums}.octomap-3d-pcd__readout-value--danger{color:#ef4444}.octomap-3d-pcd__gizmo-readout{position:absolute;left:12px;top:12px;z-index:1;padding:5px 9px;border:1px solid #232b3a;border-radius:6px;background:#141a24e0;color:#e6edf7;font-size:12px;line-height:1.5;white-space:pre-line;font-variant-numeric:tabular-nums;pointer-events:none}\n"], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
-i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: OctoMapComponent, decorators: [{
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImport: i0, type: Octomap3dPcdComponent, decorators: [{
             type: Component,
-            args: [{ selector: 'howell-octomap-3d-pcd', imports: [], providers: [...OctoMapControllerProviders], changeDetection: ChangeDetectionStrategy.OnPush, template: "<div #viewport class=\"octo-map__viewport\">\n  <!--\n    \u624B\u67C4\u7684\u8BFB\u6570\uFF08\u4F4D\u79FB / \u65CB\u8F6C\uFF09\u3002\u5185\u5BB9\u7531\u5BBF\u4E3B\u7ED9\uFF08\u5730\u56FE\u4E0D\u77E5\u9053\u300C\u504F\u79FB\u4E86\u591A\u5C11\u300D\u300C\u8F6C\u4E86\u591A\u5C11\u5EA6\u300D\n    \u8FD9\u79CD\u8BED\u4E49\uFF09\uFF0C\u4F4D\u7F6E\u9009\u5DE6\u4E0A\uFF1A\u53F3\u4E0B\u90A3\u5757\u662F\u60AC\u505C\u8BFB\u6570\uFF0C\u4E24\u8005\u4E0D\u80FD\u6253\u67B6\u3002\n  -->\n  @if (points && gizmoMode !== 'off' && gizmoReadout) {\n    <div class=\"octo-map__gizmo-readout\">{{ gizmoReadout }}</div>\n  }\n  @if (hover(); as info) {\n    <div class=\"octo-map__readout\">\n      <div class=\"octo-map__readout-head\">\n        {{ renderMode === 'voxel' ? '\u4F53\u7D20\u4E2D\u5FC3' : '\u4E91\u70B9' }}\n      </div>\n      <div class=\"octo-map__readout-row\">\n        <span class=\"octo-map__readout-key\">X</span>\n        <span class=\"octo-map__readout-value\">{{ info.position[0].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octo-map__readout-row\">\n        <span class=\"octo-map__readout-key\">Y</span>\n        <span class=\"octo-map__readout-value\">{{ info.position[1].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octo-map__readout-row\">\n        <span class=\"octo-map__readout-key\">Z</span>\n        <span class=\"octo-map__readout-value\">{{ info.position[2].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octo-map__readout-row\">\n        <span class=\"octo-map__readout-key\">\u79BB\u5730</span>\n        <span class=\"octo-map__readout-value\">{{ info.height.toFixed(3) }} m</span>\n      </div>\n      @if (info.forbidden !== null) {\n        <div class=\"octo-map__readout-row\">\n          <span class=\"octo-map__readout-key\">\u969C\u788D</span>\n          <span\n            class=\"octo-map__readout-value\"\n            [class.octo-map__readout-value--danger]=\"info.forbidden\"\n          >\n            {{ info.forbidden ? '\u662F' : '\u5426' }}\n          </span>\n        </div>\n      }\n    </div>\n  }\n</div>\n", styles: [":host{display:block;width:100%;height:100%}.octo-map__viewport{width:100%;height:100%;overflow:hidden;position:relative}.octo-map__viewport canvas{display:block;width:100%;height:100%}.octo-map__readout{position:absolute;right:12px;bottom:12px;z-index:1;min-width:132px;padding:8px 10px;border:1px solid #232b3a;border-radius:6px;background:#141a24e0;font-size:12px;line-height:1.6;pointer-events:none}.octo-map__readout-head{margin-bottom:4px;color:#8b98ad;font-size:11px}.octo-map__readout-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.octo-map__readout-key{color:#8b98ad}.octo-map__readout-value{color:#e6edf7;font-variant-numeric:tabular-nums}.octo-map__readout-value--danger{color:#ef4444}.octo-map__gizmo-readout{position:absolute;left:12px;top:12px;z-index:1;padding:5px 9px;border:1px solid #232b3a;border-radius:6px;background:#141a24e0;color:#e6edf7;font-size:12px;line-height:1.5;white-space:pre-line;font-variant-numeric:tabular-nums;pointer-events:none}\n"] }]
+            args: [{ selector: 'howell-octomap-3d-pcd', imports: [], providers: [...Octomap3dPcdProviders], changeDetection: ChangeDetectionStrategy.OnPush, template: "<div #viewport class=\"octomap-3d-pcd__viewport\">\n  <!--\n    \u624B\u67C4\u7684\u8BFB\u6570\uFF08\u4F4D\u79FB / \u65CB\u8F6C\uFF09\u3002\u5185\u5BB9\u7531\u5BBF\u4E3B\u7ED9\uFF08\u5730\u56FE\u4E0D\u77E5\u9053\u300C\u504F\u79FB\u4E86\u591A\u5C11\u300D\u300C\u8F6C\u4E86\u591A\u5C11\u5EA6\u300D\n    \u8FD9\u79CD\u8BED\u4E49\uFF09\uFF0C\u4F4D\u7F6E\u9009\u5DE6\u4E0A\uFF1A\u53F3\u4E0B\u90A3\u5757\u662F\u60AC\u505C\u8BFB\u6570\uFF0C\u4E24\u8005\u4E0D\u80FD\u6253\u67B6\u3002\n  -->\n  @if (points && gizmoMode !== 'off' && gizmoReadout) {\n    <div class=\"octomap-3d-pcd__gizmo-readout\">{{ gizmoReadout }}</div>\n  }\n  @if (hover(); as info) {\n    <div class=\"octomap-3d-pcd__readout\">\n      <div class=\"octomap-3d-pcd__readout-head\">\n        {{ renderMode === 'voxel' ? '\u4F53\u7D20\u4E2D\u5FC3' : '\u4E91\u70B9' }}\n      </div>\n      <div class=\"octomap-3d-pcd__readout-row\">\n        <span class=\"octomap-3d-pcd__readout-key\">X</span>\n        <span class=\"octomap-3d-pcd__readout-value\">{{ info.position[0].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octomap-3d-pcd__readout-row\">\n        <span class=\"octomap-3d-pcd__readout-key\">Y</span>\n        <span class=\"octomap-3d-pcd__readout-value\">{{ info.position[1].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octomap-3d-pcd__readout-row\">\n        <span class=\"octomap-3d-pcd__readout-key\">Z</span>\n        <span class=\"octomap-3d-pcd__readout-value\">{{ info.position[2].toFixed(3) }} m</span>\n      </div>\n      <div class=\"octomap-3d-pcd__readout-row\">\n        <span class=\"octomap-3d-pcd__readout-key\">\u79BB\u5730</span>\n        <span class=\"octomap-3d-pcd__readout-value\">{{ info.height.toFixed(3) }} m</span>\n      </div>\n      @if (info.forbidden !== null) {\n        <div class=\"octomap-3d-pcd__readout-row\">\n          <span class=\"octomap-3d-pcd__readout-key\">\u969C\u788D</span>\n          <span\n            class=\"octomap-3d-pcd__readout-value\"\n            [class.octomap-3d-pcd__readout-value--danger]=\"info.forbidden\"\n          >\n            {{ info.forbidden ? '\u662F' : '\u5426' }}\n          </span>\n        </div>\n      }\n    </div>\n  }\n</div>\n", styles: [":host{display:block;width:100%;height:100%}.octomap-3d-pcd__viewport{width:100%;height:100%;overflow:hidden;position:relative}.octomap-3d-pcd__viewport canvas{display:block;width:100%;height:100%}.octomap-3d-pcd__readout{position:absolute;right:12px;bottom:12px;z-index:1;min-width:132px;padding:8px 10px;border:1px solid #232b3a;border-radius:6px;background:#141a24e0;font-size:12px;line-height:1.6;pointer-events:none}.octomap-3d-pcd__readout-head{margin-bottom:4px;color:#8b98ad;font-size:11px}.octomap-3d-pcd__readout-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.octomap-3d-pcd__readout-key{color:#8b98ad}.octomap-3d-pcd__readout-value{color:#e6edf7;font-variant-numeric:tabular-nums}.octomap-3d-pcd__readout-value--danger{color:#ef4444}.octomap-3d-pcd__gizmo-readout{position:absolute;left:12px;top:12px;z-index:1;padding:5px 9px;border:1px solid #232b3a;border-radius:6px;background:#141a24e0;color:#e6edf7;font-size:12px;line-height:1.5;white-space:pre-line;font-variant-numeric:tabular-nums;pointer-events:none}\n"] }]
         }], propDecorators: { viewportRef: [{
                 type: ViewChild,
                 args: ['viewport', { static: true }]
@@ -7248,5 +7248,5 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "21.2.26", ngImpo
  * Generated bundle index. Do not edit.
  */
 
-export { DEFAULT_OCTO_MAP_SETTINGS, MAP_CONFIG_KEYS, OctoMapComponent };
+export { DEFAULT_OCTO_MAP_SETTINGS, MAP_CONFIG_KEYS, Octomap3dPcdComponent };
 //# sourceMappingURL=howell-octomap-3d.mjs.map
