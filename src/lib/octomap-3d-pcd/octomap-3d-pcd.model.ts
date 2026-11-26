@@ -189,7 +189,7 @@ export type OctoMapRenderMode = 'points' | 'voxel';
  * 它住在模型的这一边，是因为它是**地图交出去的契约**：组件只负责按当前视图拼出这三样
  * （点、对齐用的包围盒、分辨率），把点压成图的那一步在消费方
  * （`common/utils/projection.util.ts` 的纯函数）。原先它和那些纯函数住在一起，
- * 于是地图反过来依赖 `common/utils`——把类型放回这里，`octo-map/` 才能整目录搬走。
+ * 于是地图反过来依赖 `common/utils`——把类型放回这里，`octomap-3d-pcd/` 才能整目录搬走。
  */
 export interface OctoMapProjectionSource {
   /** 交错的 XYZ 坐标。 */
@@ -370,7 +370,7 @@ export interface OctoMapDogModelRequest {
 /**
  * {@link OctoMapComponent} 使用的可调视图参数。
  *
- * 这一份里的每一项都由父组件**逐项**绑到 `app-octo-map` 上
+ * 这一份里的每一项都由父组件**逐项**绑到 `howell-octomap-3d-pcd` 上
  * （`system-manager.component.html` 那 33 条 `[同名]="settings().同名"`，没有改名、
  * 没有中转），也都写在 `assets/config/octomap.config.json` 里——文件与这份接口逐项
  * 对应，由 `config.service.spec.ts` 守着（多一项少一项都会红）。

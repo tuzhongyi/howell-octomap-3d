@@ -1,4 +1,4 @@
-import { OctoMapPointCloud } from '../octo-map.model';
+import { OctoMapPointCloud } from '../octomap-3d-pcd.model';
 
 /**
  * 查看器一次愿意渲染的体素上限。与 `buildVoxels` 共用同一个数字，避免两处

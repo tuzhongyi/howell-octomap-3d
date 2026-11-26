@@ -3,7 +3,7 @@ import { Subject } from 'rxjs';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
-import { OctoMapBoundingBox, OctoMapGizmoMode, OctoMapSelectionBox } from '../octo-map.model';
+import { OctoMapBoundingBox, OctoMapGizmoMode, OctoMapSelectionBox } from '../octomap-3d-pcd.model';
 import { OctoMapGroundExtent, groundPlaneRect } from './octo-map-ground-plane';
 
 /**

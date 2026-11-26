@@ -41,7 +41,7 @@ import {
   OctoMapReply,
   OctoMapSelectionBox,
   OctoMapWalkProgress,
-} from './octo-map.model';
+} from './octomap-3d-pcd.model';
 
 const DEFAULT_BACKGROUND = '#0b1016';
 const DEFAULT_POINT_COLOR = '#4fc3f7';
@@ -71,10 +71,10 @@ function isSameHover(a: OctoMapHoverInfo | null, b: OctoMapHoverInfo | null): bo
  * 所有渲染逻辑都在 `controller/` 里。
  */
 @Component({
-  selector: 'app-octo-map',
+  selector: 'howell-octomap-3d-pcd',
   imports: [],
-  templateUrl: './octo-map.component.html',
-  styleUrl: './octo-map.component.less',
+  templateUrl: './octomap-3d-pcd.component.html',
+  styleUrl: './octomap-3d-pcd.component.less',
   providers: [...OctoMapControllerProviders],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

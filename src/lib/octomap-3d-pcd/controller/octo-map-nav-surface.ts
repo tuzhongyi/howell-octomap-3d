@@ -1,4 +1,4 @@
-import { DEFAULT_OCTO_MAP_SETTINGS, OctoMapBoundingBox } from '../octo-map.model';
+import { DEFAULT_OCTO_MAP_SETTINGS, OctoMapBoundingBox } from '../octomap-3d-pcd.model';
 
 /**
  * 同一个 run 内相邻两点的最大竖直间距（世界单位）。

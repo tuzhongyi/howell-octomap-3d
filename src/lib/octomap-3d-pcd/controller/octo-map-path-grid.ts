@@ -1,4 +1,4 @@
-import { OctoMapBoundingBox } from '../octo-map.model';
+import { OctoMapBoundingBox } from '../octomap-3d-pcd.model';
 
 /**
  * 规划网格的**格数**上限（`nx * nz`，含外圈边距的全部格子）。

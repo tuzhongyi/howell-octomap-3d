@@ -1,4 +1,4 @@
-import { OctoMapPathAlgorithm } from '../octo-map.model';
+import { OctoMapPathAlgorithm } from '../octomap-3d-pcd.model';
 import { OctoMapNavSurface } from './octo-map-nav-surface';
 import { OctoMapPathPlanner } from './octo-map-path-planner';
 

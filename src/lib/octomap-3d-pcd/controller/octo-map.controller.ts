@@ -3,7 +3,7 @@ import {
   OctoMapPaintedVoxels,
   OctoMapPointCloud,
   OctoMapProjectionSource,
-} from '../octo-map.model';
+} from '../octomap-3d-pcd.model';
 import { OctoMapDogController } from './octo-map-dog.controller';
 import { OctoMapGlobalController } from './octo-map-global.controller';
 import { OctoMapGroundExtent } from './octo-map-ground-plane';

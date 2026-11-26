@@ -1,4 +1,4 @@
-import { OctoMapBoundingBox } from '../octo-map.model';
+import { OctoMapBoundingBox } from '../octomap-3d-pcd.model';
 
 /**
  * 视口那块灰色地面平面的外圈延展量，**各轴独立**。

@@ -11,7 +11,7 @@ import {
   OctoMapPointsChangedDetail,
   OctoMapProjectionSource,
   OctoMapRenderMode,
-} from '../octo-map.model';
+} from '../octomap-3d-pcd.model';
 import { cloudFloorY } from '../utils/cloud-floor.util';
 import { MAX_VOXEL_COUNT } from '../utils/voxel-sample.util';
 import { OctoMapVoxelGrid } from './octo-map-grid';
@@ -414,7 +414,7 @@ export class OctoMapGrilleController {
    *
    * 但要说清楚：**`occupied === 0` 从组件那条路走不到**——`pickVoxel` 是对着体素网格做
    * 射线拾取的，命中就意味着那个体素存在。组件真正够得着的触发点是「射线没打到任何
-   * 体素」（见 `octo-map.component.ts` 的 `reportBrushMiss`）。这两个数照旧返回：它们是
+   * 体素」（见 `octomap-3d-pcd.component.ts` 的 `reportBrushMiss`）。这两个数照旧返回：它们是
    * 控制器这一层的真话，且将来 `pickVoxel` 若改成吸附到附近体素，`occupied` 立刻就有用。
    */
   brushAt(
@@ -468,7 +468,7 @@ export class OctoMapGrilleController {
    *
    * 返回值与 {@link brushAt} 对称（`marked` = 本次真正擦掉的、`occupied` = 范围内的
    * 已占用体素数），好让两边能共用一份判据；但**擦除不看它**——在没有障碍的地方擦本来
-   * 就是常事，不该弹提示（见 `octo-map.component.ts` 里那一支）。
+   * 就是常事，不该弹提示（见 `octomap-3d-pcd.component.ts` 里那一支）。
    */
   eraseAt(
     x: number,

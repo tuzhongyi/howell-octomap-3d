@@ -7,7 +7,7 @@ import {
   OctoMapPathAlgorithm,
   OctoMapPathFailedDetail,
   OctoMapPathFailureReason,
-} from '../octo-map.model';
+} from '../octomap-3d-pcd.model';
 import { OctoMapVoxelGrid } from './octo-map-grid';
 import { OctoMapGlobalController } from './octo-map-global.controller';
 import { MAX_FREE_CELLS, NAV_CELL_SIZE, navGridSize } from './octo-map-path-grid';

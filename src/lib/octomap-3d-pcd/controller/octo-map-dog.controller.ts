@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import * as THREE from 'three';
-import { OctoMapWalkProgress, OctoMapWalkState } from '../octo-map.model';
+import { OctoMapWalkProgress, OctoMapWalkState } from '../octomap-3d-pcd.model';
 import { OctoMapGlobalController } from './octo-map-global.controller';
 
 /** 行进速度，世界单位/秒。 */

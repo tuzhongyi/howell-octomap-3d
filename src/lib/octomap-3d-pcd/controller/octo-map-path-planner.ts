@@ -1,4 +1,4 @@
-import { OctoMapBoundingBox, OctoMapPathAlgorithm } from '../octo-map.model';
+import { OctoMapBoundingBox, OctoMapPathAlgorithm } from '../octomap-3d-pcd.model';
 import { OctoMapVoxelGrid } from './octo-map-grid';
 import { OctoMapNavSurface } from './octo-map-nav-surface';
 import { CELL_SAFETY } from './octo-map-path-grid';
