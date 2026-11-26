@@ -608,6 +608,15 @@ declare const DEFAULT_OCTOMAP_SETTINGS: {
     groundExtendZ: number;
     pathAlgorithm: "surfaceGraph";
 };
+/**
+ * 组件对外的只读状态快照。
+ *
+ * 三维组件本身不画读数浮框；宿主的状态组件（test 的 `d3-status`）读这个快照来
+ * 显示悬停点信息，手柄读数则由宿主自己格式化后直接传给状态组件。
+ */
+interface Octomap3dPcdViewState {
+    hover: OctomapHoverInfo | null;
+}
 
 /**
  * 可复用的 3D 查看器，使用 Three.js 渲染点云/octomap。
@@ -687,14 +696,6 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
      * 只是中心不动。
      */
     refitReferenceOnPointsChange: boolean;
-    /**
-     * 手柄左上角那段只读读数（宿主格式化好的文本，可以有换行）。null 时不显示。
-     *
-     * 内容是宿主的事：地图不知道「偏移了多少」「转了多少度」这种语义，它只知道云被
-     * 动过（见 {@link cloudTranslating} / {@link cloudTranslated} /
-     * {@link cloudRotating} / {@link cloudRotated}）。
-     */
-    gizmoReadout: string | null;
     /** 点云的绘制方式：原始点云或立体格栅。 */
     renderMode: OctomapRenderMode;
     /** 体素边长（世界单位）。为 null 时由包围盒推导。 */
@@ -860,7 +861,7 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
     /**
      * 拖动平移手柄**过程中**发出：从按下那一刻算起挪了多少（相对量，世界坐标）。
      *
-     * 给 {@link gizmoReadout} 那种「边拖边报数」的显示用；判据、松手后的落账
+     * 给宿主「边拖边报数」的显示用（test 里是 `d3-status`）；判据、松手后的落账
      * 一律走 {@link cloudTranslated}。一次拖动会发很多次（跟着指针走），接的人自己
      * 掂量要不要每帧都画。
      */
@@ -909,12 +910,14 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
     /** 发生渲染/几何错误时发出。 */
     readonly error: EventEmitter<Error>;
     /**
-     * 指针下那个云点的读数，显示在视口右下角；没指着东西时为 null。
+     * 指针下那个云点的读数，交给宿主的状态组件显示；没指着东西时为 null。
      *
      * 用信号而不是普通字段：探测发生在 requestAnimationFrame 里，信号能自己把 OnPush
      * 的这一帧标脏，不必再去碰变更检测。
      */
     protected readonly hover: i0.WritableSignal<OctomapHoverInfo | null>;
+    /** 只读状态快照；宿主状态组件用。 */
+    viewState(): Octomap3dPcdViewState;
     private readonly controller;
     private readonly subscriptions;
     /** 已排队的悬停探测帧；0 = 没有排队。 */
@@ -1034,7 +1037,7 @@ declare class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestr
      */
     private groundExtent;
     static ɵfac: i0.ɵɵFactoryDeclaration<Octomap3dPcdComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<Octomap3dPcdComponent, "howell-octomap-3d-pcd", never, { "points": { "alias": "points"; "required": false; }; "preview": { "alias": "preview"; "required": false; }; "gizmoMode": { "alias": "gizmoMode"; "required": false; }; "gizmoPose": { "alias": "gizmoPose"; "required": false; }; "selectionBox": { "alias": "selectionBox"; "required": false; }; "gizmoPreview": { "alias": "gizmoPreview"; "required": false; }; "fitOnPointsChange": { "alias": "fitOnPointsChange"; "required": false; }; "refitReferenceOnPointsChange": { "alias": "refitReferenceOnPointsChange"; "required": false; }; "gizmoReadout": { "alias": "gizmoReadout"; "required": false; }; "renderMode": { "alias": "renderMode"; "required": false; }; "voxelSize": { "alias": "voxelSize"; "required": false; }; "backgroundColor": { "alias": "backgroundColor"; "required": false; }; "pointColor": { "alias": "pointColor"; "required": false; }; "pointSize": { "alias": "pointSize"; "required": false; }; "showGrid": { "alias": "showGrid"; "required": false; }; "showNavLimit": { "alias": "showNavLimit"; "required": false; }; "showPath": { "alias": "showPath"; "required": false; }; "showPathPoints": { "alias": "showPathPoints"; "required": false; }; "gridSize": { "alias": "gridSize"; "required": false; }; "gridDivisions": { "alias": "gridDivisions"; "required": false; }; "fitView": { "alias": "fitView"; "required": false; }; "autoRotate": { "alias": "autoRotate"; "required": false; }; "showColoring": { "alias": "showColoring"; "required": false; }; "forbiddenColor": { "alias": "forbiddenColor"; "required": false; }; "painted": { "alias": "painted"; "required": false; }; "interactionMode": { "alias": "interactionMode"; "required": false; }; "brushRadius": { "alias": "brushRadius"; "required": false; }; "maxStepHeight": { "alias": "maxStepHeight"; "required": false; }; "crossWidth": { "alias": "crossWidth"; "required": false; }; "fillBaseCells": { "alias": "fillBaseCells"; "required": false; }; "goalRadius": { "alias": "goalRadius"; "required": false; }; "dogRadius": { "alias": "dogRadius"; "required": false; }; "dogHeight": { "alias": "dogHeight"; "required": false; }; "showDogCollision": { "alias": "showDogCollision"; "required": false; }; "dogScale": { "alias": "dogScale"; "required": false; }; "dogFitCollision": { "alias": "dogFitCollision"; "required": false; }; "dogModelHeading": { "alias": "dogModelHeading"; "required": false; }; "dogHeading": { "alias": "dogHeading"; "required": false; }; "maxHeight": { "alias": "maxHeight"; "required": false; }; "minHeight": { "alias": "minHeight"; "required": false; }; "groundExtendsOutside": { "alias": "groundExtendsOutside"; "required": false; }; "groundExtendX": { "alias": "groundExtendX"; "required": false; }; "groundExtendZ": { "alias": "groundExtendZ"; "required": false; }; "pathAlgorithm": { "alias": "pathAlgorithm"; "required": false; }; "maxPickingPoints": { "alias": "maxPickingPoints"; "required": false; }; "findPath": { "alias": "findPath"; "required": false; }; "startWalk": { "alias": "startWalk"; "required": false; }; "seekWalk": { "alias": "seekWalk"; "required": false; }; "pauseWalk": { "alias": "pauseWalk"; "required": false; }; "resumeWalk": { "alias": "resumeWalk"; "required": false; }; "clearDeployment": { "alias": "clearDeployment"; "required": false; }; "markAllObstacles": { "alias": "markAllObstacles"; "required": false; }; "clearObstacles": { "alias": "clearObstacles"; "required": false; }; "clearDogModel": { "alias": "clearDogModel"; "required": false; }; "loadDogModel": { "alias": "loadDogModel"; "required": false; }; "exportPointCloud": { "alias": "exportPointCloud"; "required": false; }; "regularizeCloud": { "alias": "regularizeCloud"; "required": false; }; "projectionSource": { "alias": "projectionSource"; "required": false; }; }, { "mapReady": "mapReady"; "pointsChanged": "pointsChanged"; "cloudTranslated": "cloudTranslated"; "cloudTranslating": "cloudTranslating"; "cloudRotated": "cloudRotated"; "cloudRotating": "cloudRotating"; "pointClicked": "pointClicked"; "pathChanged": "pathChanged"; "pathFailed": "pathFailed"; "walkProgress": "walkProgress"; "dogPlaced": "dogPlaced"; "goalPlaced": "goalPlaced"; "paintedChanged": "paintedChanged"; "brushMiss": "brushMiss"; "interactionModeChange": "interactionModeChange"; "error": "error"; }, never, never, true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<Octomap3dPcdComponent, "howell-octomap-3d-pcd", never, { "points": { "alias": "points"; "required": false; }; "preview": { "alias": "preview"; "required": false; }; "gizmoMode": { "alias": "gizmoMode"; "required": false; }; "gizmoPose": { "alias": "gizmoPose"; "required": false; }; "selectionBox": { "alias": "selectionBox"; "required": false; }; "gizmoPreview": { "alias": "gizmoPreview"; "required": false; }; "fitOnPointsChange": { "alias": "fitOnPointsChange"; "required": false; }; "refitReferenceOnPointsChange": { "alias": "refitReferenceOnPointsChange"; "required": false; }; "renderMode": { "alias": "renderMode"; "required": false; }; "voxelSize": { "alias": "voxelSize"; "required": false; }; "backgroundColor": { "alias": "backgroundColor"; "required": false; }; "pointColor": { "alias": "pointColor"; "required": false; }; "pointSize": { "alias": "pointSize"; "required": false; }; "showGrid": { "alias": "showGrid"; "required": false; }; "showNavLimit": { "alias": "showNavLimit"; "required": false; }; "showPath": { "alias": "showPath"; "required": false; }; "showPathPoints": { "alias": "showPathPoints"; "required": false; }; "gridSize": { "alias": "gridSize"; "required": false; }; "gridDivisions": { "alias": "gridDivisions"; "required": false; }; "fitView": { "alias": "fitView"; "required": false; }; "autoRotate": { "alias": "autoRotate"; "required": false; }; "showColoring": { "alias": "showColoring"; "required": false; }; "forbiddenColor": { "alias": "forbiddenColor"; "required": false; }; "painted": { "alias": "painted"; "required": false; }; "interactionMode": { "alias": "interactionMode"; "required": false; }; "brushRadius": { "alias": "brushRadius"; "required": false; }; "maxStepHeight": { "alias": "maxStepHeight"; "required": false; }; "crossWidth": { "alias": "crossWidth"; "required": false; }; "fillBaseCells": { "alias": "fillBaseCells"; "required": false; }; "goalRadius": { "alias": "goalRadius"; "required": false; }; "dogRadius": { "alias": "dogRadius"; "required": false; }; "dogHeight": { "alias": "dogHeight"; "required": false; }; "showDogCollision": { "alias": "showDogCollision"; "required": false; }; "dogScale": { "alias": "dogScale"; "required": false; }; "dogFitCollision": { "alias": "dogFitCollision"; "required": false; }; "dogModelHeading": { "alias": "dogModelHeading"; "required": false; }; "dogHeading": { "alias": "dogHeading"; "required": false; }; "maxHeight": { "alias": "maxHeight"; "required": false; }; "minHeight": { "alias": "minHeight"; "required": false; }; "groundExtendsOutside": { "alias": "groundExtendsOutside"; "required": false; }; "groundExtendX": { "alias": "groundExtendX"; "required": false; }; "groundExtendZ": { "alias": "groundExtendZ"; "required": false; }; "pathAlgorithm": { "alias": "pathAlgorithm"; "required": false; }; "maxPickingPoints": { "alias": "maxPickingPoints"; "required": false; }; "findPath": { "alias": "findPath"; "required": false; }; "startWalk": { "alias": "startWalk"; "required": false; }; "seekWalk": { "alias": "seekWalk"; "required": false; }; "pauseWalk": { "alias": "pauseWalk"; "required": false; }; "resumeWalk": { "alias": "resumeWalk"; "required": false; }; "clearDeployment": { "alias": "clearDeployment"; "required": false; }; "markAllObstacles": { "alias": "markAllObstacles"; "required": false; }; "clearObstacles": { "alias": "clearObstacles"; "required": false; }; "clearDogModel": { "alias": "clearDogModel"; "required": false; }; "loadDogModel": { "alias": "loadDogModel"; "required": false; }; "exportPointCloud": { "alias": "exportPointCloud"; "required": false; }; "regularizeCloud": { "alias": "regularizeCloud"; "required": false; }; "projectionSource": { "alias": "projectionSource"; "required": false; }; }, { "mapReady": "mapReady"; "pointsChanged": "pointsChanged"; "cloudTranslated": "cloudTranslated"; "cloudTranslating": "cloudTranslating"; "cloudRotated": "cloudRotated"; "cloudRotating": "cloudRotating"; "pointClicked": "pointClicked"; "pathChanged": "pathChanged"; "pathFailed": "pathFailed"; "walkProgress": "walkProgress"; "dogPlaced": "dogPlaced"; "goalPlaced": "goalPlaced"; "paintedChanged": "paintedChanged"; "brushMiss": "brushMiss"; "interactionModeChange": "interactionModeChange"; "error": "error"; }, never, never, true, never>;
 }
 
 /**
@@ -1130,5 +1133,5 @@ declare class VoxelAccumulator {
 declare const NAV_CELL_SIZE = 0.05;
 
 export { DEFAULT_OCTOMAP_SETTINGS, MAP_CONFIG_KEYS, MAX_VOXEL_COUNT, NAV_CELL_SIZE, Octomap3dPcdComponent, VoxelAccumulator, VoxelLimitError, cloudFloorY };
-export type { OctomapBoundingBox, OctomapBrushMissDetail, OctomapCloudPreview, OctomapCloudRotation, OctomapCloudTranslation, OctomapDogModelRequest, OctomapGizmoMode, OctomapGizmoPose, OctomapHoverInfo, OctomapInteractionMode, OctomapMapSettings, OctomapPaintedVoxels, OctomapPathAlgorithm, OctomapPathFailedDetail, OctomapPathFailureReason, OctomapPointClickedDetail, OctomapPointCloud, OctomapPointsChangedDetail, OctomapProjectionSource, OctomapReadyDetail, OctomapRenderMode, OctomapReply, OctomapSelectionBox, OctomapWalkProgress, OctomapWalkState };
+export type { Octomap3dPcdViewState, OctomapBoundingBox, OctomapBrushMissDetail, OctomapCloudPreview, OctomapCloudRotation, OctomapCloudTranslation, OctomapDogModelRequest, OctomapGizmoMode, OctomapGizmoPose, OctomapHoverInfo, OctomapInteractionMode, OctomapMapSettings, OctomapPaintedVoxels, OctomapPathAlgorithm, OctomapPathFailedDetail, OctomapPathFailureReason, OctomapPointClickedDetail, OctomapPointCloud, OctomapPointsChangedDetail, OctomapProjectionSource, OctomapReadyDetail, OctomapRenderMode, OctomapReply, OctomapSelectionBox, OctomapWalkProgress, OctomapWalkState };
 //# sourceMappingURL=howell-octomap-3d.d.ts.map
