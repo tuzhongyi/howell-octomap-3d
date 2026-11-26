@@ -1,4 +1,4 @@
-import { OctoMapBoundingBox, OctoMapPathAlgorithm } from '../octomap-3d-pcd.model';
+import { OctomapBoundingBox, OctomapPathAlgorithm } from '../octomap-3d-pcd.model';
 import { Octomap3dPcdVoxelGrid } from './octomap-3d-pcd-grid';
 import { Octomap3dPcdNavSurface } from './octomap-3d-pcd-nav-surface';
 import { CELL_SAFETY } from './octomap-3d-pcd-path-grid';
@@ -138,12 +138,12 @@ const SURFACE_MIN_CELLS = 9;
  * 「会不会超限」本来就得先算一次，再算一遍是白花；更要紧的是**两边必须逐位相同**，
  * 而传进来就只有一份，不存在两处推导出不同结果的可能。
  */
-export interface OctoMapPathRequest {
+export interface OctomapPathRequest {
   /** 体素网格，只用来读刷过的禁行列（见 {@link Octomap3dPcdPathPlanner.bannedColumns}）。 */
   grid: Octomap3dPcdVoxelGrid;
   positions: Float32Array | null;
   /** 点云包围盒；`groundExtendsOutside` 为 false 时用来封住扫描之外的地面。 */
-  bbox: OctoMapBoundingBox;
+  bbox: OctomapBoundingBox;
   start: [number, number, number];
   goal: [number, number, number];
   /** 设置里的「跨越高度」**原值**，下限在这里面兜（见 {@link MIN_STEP_HEIGHT}）。 */
@@ -151,7 +151,7 @@ export interface OctoMapPathRequest {
   crossWidth: number;
   /**
    * 「填充基准范围」（设置里那一项，单位：格），见
-   * {@link OctoMapMapSettings.fillBaseCells}。
+   * {@link OctomapMapSettings.fillBaseCells}。
    *
    * 它是**建图参数**，所以只有 `'cloudFit'` 那条算法读它（`'surfaceGraph'` 根本不填）；
    * 与 `maxStepHeight` / `crossWidth` 那些 `configure` 期的参数不同，它在
@@ -181,17 +181,17 @@ export interface OctoMapPathRequest {
  * 上一次的落差会活到下一次，`failedReason()` 就会拿一个不相干的旧值给这次失败报
  * `'gap'`。
  */
-export interface OctoMapPathPlan {
+export interface OctomapPathPlan {
   /** 有序的世界坐标折线，或 null。 */
   points: [number, number, number][] | null;
   /**
    * 「终点够不着」「小狗下不来」「吸附替终点丢了高度」这三件事的程度，
-   * 见 `Octomap3dPcdPath.heightGap` 与 `OctoMapPathFailureReason` 的 `goalTooHigh`。
+   * 见 `Octomap3dPcdPath.heightGap` 与 `OctomapPathFailureReason` 的 `goalTooHigh`。
    */
   heightGap: number | null;
   /** 卡住的是小狗自己吗，见 `Octomap3dPcdPath.dogStuck`。 */
   dogStuck: boolean;
-  /** 终点浮在它那一列所有面之上吗，见 `OctoMapPathFailureReason` 的 `goalTooHigh`。 */
+  /** 终点浮在它那一列所有面之上吗，见 `OctomapPathFailureReason` 的 `goalTooHigh`。 */
   goalTooHigh: boolean;
   /**
    * 终点**有面接着**吗——它的 Y 落在那一列最高的那个面上（含一格容差，与
@@ -206,7 +206,7 @@ export interface OctoMapPathPlan {
 }
 
 /** 什么都没规划出来时的那份结果（五个字段都取空值）。 */
-export function emptyPlan(): OctoMapPathPlan {
+export function emptyPlan(): OctomapPathPlan {
   return {
     points: null,
     heightGap: null,
@@ -220,7 +220,7 @@ export function emptyPlan(): OctoMapPathPlan {
  * 在**表面图**上做 A* 的那一套算法，与「表面图怎么建」正交。
  *
  * 一个算法 = 一个子类，靠 {@link buildSurface} 这一个钩子区分。分开是为了让
- * `OctoMapMapSettings.pathAlgorithm` 能选：现有那条（每列一个常数虚拟地面）与新的
+ * `OctomapMapSettings.pathAlgorithm` 能选：现有那条（每列一个常数虚拟地面）与新的
  * 那条（空列从邻居取面高）共用全部搜索、平滑、吸附逻辑，**只差表面图怎么建**。
  *
  * 为什么是这个粒度而不是「每个算法一整份」：A* 的记账、平滑的判据、起终点吸附
@@ -252,8 +252,8 @@ export abstract class Octomap3dPcdPathPlanner {
     fillBaseCells: number;
   } | null = null;
 
-  /** 这个规划器对应 `OctoMapMapSettings.pathAlgorithm` 里的哪一个。 */
-  abstract readonly algorithm: OctoMapPathAlgorithm;
+  /** 这个规划器对应 `OctomapMapSettings.pathAlgorithm` 里的哪一个。 */
+  abstract readonly algorithm: OctomapPathAlgorithm;
 
   /**
    * 按本算法的路子建一张表面图。子类**唯一**要实现的钩子。
@@ -296,7 +296,7 @@ export abstract class Octomap3dPcdPathPlanner {
    * 这里**什么都不记在实例上**（除了表面图缓存）：结果整份返回，由调用方决定怎么
    * 用它。所以同一个规划器可以被连着调、被两个不同的起点终点交叉调，互不干扰。
    */
-  plan(req: OctoMapPathRequest): OctoMapPathPlan {
+  plan(req: OctomapPathRequest): OctomapPathPlan {
     const step = Math.max(req.maxStepHeight, MIN_STEP_HEIGHT);
     const cell = req.cell;
 
@@ -328,7 +328,7 @@ export abstract class Octomap3dPcdPathPlanner {
       return emptyPlan();
     }
 
-    // 终点**浮在半空**吗（见 `OctoMapPathFailureReason` 的 `goalTooHigh`）。
+    // 终点**浮在半空**吗（见 `OctomapPathFailureReason` 的 `goalTooHigh`）。
     //
     // 不拦的话它会被**静默地**变成一条成功的路边小事：`mapPoint` 第 3 段把终点一路
     // 吸附到地面上，路径忠实地走到终点正下方，于是 `0.139 m < goalRadius 0.5 m`
@@ -338,7 +338,7 @@ export abstract class Octomap3dPcdPathPlanner {
     // 「末端离终点 5.8 m」会把用户引到「终点范围」那根滑杆上去。）
     //
     // 「那一列有没有面接着终点」——量一次、两处用：这儿判 `goalTooHigh`，调用方判
-    // 接受范围量几维（见 `OctoMapPathPlan.goalOnFace`）。它是下面第 1 条的**取反**，
+    // 接受范围量几维（见 `OctomapPathPlan.goalOnFace`）。它是下面第 1 条的**取反**，
     // 所以两处的容差天生一致，不会出现「这边说浮空、那边说在面上」。
     //
     // 容差**取 `cell` 不是随手取的**——它正是 `mapPoint` 第 1 段认「点到的那个面」

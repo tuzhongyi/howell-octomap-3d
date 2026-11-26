@@ -1,4 +1,4 @@
-import { OctoMapPathAlgorithm } from '../octomap-3d-pcd.model';
+import { OctomapPathAlgorithm } from '../octomap-3d-pcd.model';
 import { Octomap3dPcdNavSurface } from './octomap-3d-pcd-nav-surface';
 import { Octomap3dPcdPathPlanner } from './octomap-3d-pcd-path-planner';
 
@@ -22,7 +22,7 @@ import { Octomap3dPcdPathPlanner } from './octomap-3d-pcd-path-planner';
  *   这是这个算法**想要**的后果，但它意味着路线会与另一档不同，不算回归。
  */
 export class Octomap3dPcdPathCloudFit extends Octomap3dPcdPathPlanner {
-  readonly algorithm: OctoMapPathAlgorithm = 'cloudFit';
+  readonly algorithm: OctomapPathAlgorithm = 'cloudFit';
 
   /** 与基类的差别只有那个 `true`：打开「空列从邻居取面高」。 */
   protected override buildSurface(

@@ -1,4 +1,4 @@
-import { OctoMapPointCloud } from '../octomap-3d-pcd.model';
+import { OctomapPointCloud } from '../octomap-3d-pcd.model';
 
 /**
  * 查看器一次愿意渲染的体素上限。与 `buildVoxels` 共用同一个数字，避免两处
@@ -135,7 +135,7 @@ export class VoxelAccumulator {
    * 导出抽稀后的点云：每格一个点，位于格中心；带颜色时为格内平均色。
    * 输出顺序是各格首次出现的顺序，因此对同一份输入稳定可复现。
    */
-  toCloud(hasColors: boolean): OctoMapPointCloud {
+  toCloud(hasColors: boolean): OctomapPointCloud {
     const count = this.used;
     if (count === 0) {
       throw new Error('抽稀后没有任何点');
@@ -161,7 +161,7 @@ export class VoxelAccumulator {
       }
     }
 
-    const cloud: OctoMapPointCloud = { positions, pointCount: count };
+    const cloud: OctomapPointCloud = { positions, pointCount: count };
     if (colors) {
       cloud.colors = colors;
     }

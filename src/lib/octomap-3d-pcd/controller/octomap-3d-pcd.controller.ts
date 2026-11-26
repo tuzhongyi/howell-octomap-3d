@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import {
-  OctoMapPaintedVoxels,
-  OctoMapPointCloud,
-  OctoMapProjectionSource,
+  OctomapPaintedVoxels,
+  OctomapPointCloud,
+  OctomapProjectionSource,
 } from '../octomap-3d-pcd.model';
 import { Octomap3dPcdDog } from './octomap-3d-pcd-dog.controller';
 import { Octomap3dPcdGlobal } from './octomap-3d-pcd-global.controller';
-import { OctoMapGroundExtent } from './octomap-3d-pcd-ground-plane';
+import { OctomapGroundExtent } from './octomap-3d-pcd-ground-plane';
 import { Octomap3dPcdPath } from './octomap-3d-pcd-path.controller';
-import { Octomap3dPcdGrille, OctoMapRenderOptions } from './octomap-3d-pcd-point.controller';
+import { Octomap3dPcdGrille, OctomapRenderOptions } from './octomap-3d-pcd-point.controller';
 
 /**
  * 将场景级（{@link Octomap3dPcdGlobal}）、点相关（{@link Octomap3dPcdGrille}）、
@@ -38,10 +38,10 @@ export class Octomap3dPcd {
    *   得出挪了多少（参考物跟着走的话，整幅画一起平移，看着像什么都没发生）。
    */
   rebuild(
-    points: OctoMapPointCloud | null,
-    options: OctoMapRenderOptions,
+    points: OctomapPointCloud | null,
+    options: OctomapRenderOptions,
     fit: boolean,
-    ground: OctoMapGroundExtent,
+    ground: OctomapGroundExtent,
     refitCamera = fit,
     refitReference = refitCamera,
   ): void {
@@ -66,19 +66,19 @@ export class Octomap3dPcd {
   }
 
   /** 调整地面大小，使其与当前的“地面向外延伸”设置匹配。 */
-  updateGroundPlane(ground: OctoMapGroundExtent): void {
+  updateGroundPlane(ground: OctomapGroundExtent): void {
     this.global.updateGroundPlane(this.grille.boundingBox, ground, this.grille.groundLevel);
   }
 
   /**
    * 在体素中心周围刷上障碍。返回值原样来自
    * {@link Octomap3dPcdPoint.brushAt}——`occupied === 0` 就是「这一带没有点」，
-   * 调用方拿它决定要不要提示（见 `OctoMapBrushMissDetail`）。
+   * 调用方拿它决定要不要提示（见 `OctomapBrushMissDetail`）。
    */
   brush(
     center: [number, number, number],
     radius: number,
-    options: OctoMapRenderOptions,
+    options: OctomapRenderOptions,
   ): { marked: number; occupied: number } {
     return this.grille.brushAt(center[0], center[1], center[2], radius, options);
   }
@@ -87,13 +87,13 @@ export class Octomap3dPcd {
   erase(
     center: [number, number, number],
     radius: number,
-    options: OctoMapRenderOptions,
+    options: OctomapRenderOptions,
   ): { marked: number; occupied: number } {
     return this.grille.eraseAt(center[0], center[1], center[2], radius, options);
   }
 
   /** 将持久化的已刷集合重新应用到当前网格（不匹配时为空操作）。 */
-  restorePainted(painted: OctoMapPaintedVoxels | null, options: OctoMapRenderOptions): void {
+  restorePainted(painted: OctomapPaintedVoxels | null, options: OctomapRenderOptions): void {
     this.grille.restorePainted(painted, options);
   }
 
@@ -139,13 +139,13 @@ export class Octomap3dPcd {
   }
 
   /** 一次性将每个占用的体素标记为禁行障碍。 */
-  markAllObstacles(options: OctoMapRenderOptions): void {
+  markAllObstacles(options: OctomapRenderOptions): void {
     this.grille.markAllForbidden(options);
   }
 
   /**
    * 从小狗到终点运行 A* 并绘制路径（不行进）。路径沿地面跟随地形，能一步跨过
-   * 地上的小坑（见 {@link OctoMapMapSettings.crossWidth}）。
+   * 地上的小坑（见 {@link OctomapMapSettings.crossWidth}）。
    */
   findPath(
     maxStepHeight: number,
@@ -224,7 +224,7 @@ export class Octomap3dPcd {
       // 用户看着狗停在桌子底下，只会以为是自己没点准。
       //
       // 距离给 null：这里要用户动的不是终点范围，再报一个水平距离只会把人往那根滑杆上
-      // 引（见 OctoMapPathFailedDetail.distance）。到底哪一句由规划器定。
+      // 引（见 OctomapPathFailedDetail.distance）。到底哪一句由规划器定。
       this.dog.stop();
       this.logPlan(start, goal, points, this.failureText(), params);
       this.path.noPath(this.path.failedReason(), null);
@@ -350,32 +350,32 @@ export class Octomap3dPcd {
   }
 
   /** 在世界坐标位置添加一个体素（供点云编辑器使用）。 */
-  addVoxel(world: [number, number, number], options: OctoMapRenderOptions): void {
+  addVoxel(world: [number, number, number], options: OctomapRenderOptions): void {
     this.grille.addVoxel(world, options);
   }
 
   /** 按网格 key 移除一个体素（供点云编辑器使用）。 */
-  removeVoxel(key: string, options: OctoMapRenderOptions): void {
+  removeVoxel(key: string, options: OctomapRenderOptions): void {
     this.grille.removeVoxel(key, options);
   }
 
   /** 将体素从其网格 key 移动到新的世界坐标位置（点云编辑器）。 */
-  moveVoxel(key: string, world: [number, number, number], options: OctoMapRenderOptions): void {
+  moveVoxel(key: string, world: [number, number, number], options: OctomapRenderOptions): void {
     this.grille.moveVoxel(key, world, options);
   }
 
   /** 以全分辨率返回编辑后的点云，用于导出。 */
-  toPointCloud(): OctoMapPointCloud | null {
+  toPointCloud(): OctomapPointCloud | null {
     return this.grille.toPointCloud();
   }
 
   /** 将当前点云重采样为每个占用的体素中心一个点。 */
-  toRegularCloud(): OctoMapPointCloud | null {
+  toRegularCloud(): OctomapPointCloud | null {
     return this.grille.toRegularCloud();
   }
 
   /** 当前俯视投影的全部输入（点位置、对齐包围盒、分辨率）。 */
-  projectionSource(): OctoMapProjectionSource | null {
+  projectionSource(): OctomapProjectionSource | null {
     return this.grille.projectionSource();
   }
 

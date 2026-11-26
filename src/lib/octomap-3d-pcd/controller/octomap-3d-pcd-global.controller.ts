@@ -3,8 +3,8 @@ import { Subject } from 'rxjs';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
-import { OctoMapBoundingBox, OctoMapGizmoMode, OctoMapSelectionBox } from '../octomap-3d-pcd.model';
-import { OctoMapGroundExtent, groundPlaneRect } from './octomap-3d-pcd-ground-plane';
+import { OctomapBoundingBox, OctomapGizmoMode, OctomapSelectionBox } from '../octomap-3d-pcd.model';
+import { OctomapGroundExtent, groundPlaneRect } from './octomap-3d-pcd-ground-plane';
 
 /**
  * 平移手柄的吸附步长（米）：1 cm。
@@ -254,7 +254,7 @@ export class Octomap3dPcdGlobal {
    *
    * 放在中心而不是地面或原点：手柄拖的是「整片云」，抓在云的重心上最直觉。
    */
-  moveGizmoTo(bbox: OctoMapBoundingBox | null): void {
+  moveGizmoTo(bbox: OctomapBoundingBox | null): void {
     if (!this.gizmoAnchor || !bbox) {
       return;
     }
@@ -287,7 +287,7 @@ export class Octomap3dPcdGlobal {
   }
 
   /** 切换手柄模式（平移 / 旋转）。`'off'` 与隐藏等价，见 {@link setMoveGizmoVisible}。 */
-  setMoveGizmoMode(mode: OctoMapGizmoMode): void {
+  setMoveGizmoMode(mode: OctomapGizmoMode): void {
     const gizmo = this.moveGizmo;
     if (!gizmo || mode === 'off' || gizmo.mode === mode) {
       return;
@@ -340,7 +340,7 @@ export class Octomap3dPcdGlobal {
    * 盒子用 `Box3Helper`：它每帧从 `box` 现算位置与缩放，所以这里改 min/max 就够了，
    * 不用重建几何。边框压暗、不写深度，被云挡住时也看得见一角——这正是要它干的事。
    */
-  setSelectionBox(box: OctoMapSelectionBox | null): void {
+  setSelectionBox(box: OctomapSelectionBox | null): void {
     if (!box) {
       if (this.selectionBox) {
         this.selectionBox.visible = false;
@@ -417,7 +417,7 @@ export class Octomap3dPcdGlobal {
    *
    * 给出去的是**用户看到的那块平面**，不是 `grille.groundLevel`（那个跟着云走）。
    * 宿主按它把某一份云「贴到地面」上，两个数混用就会贴歪——见
-   * `OctoMapPointsChangedDetail.groundPlaneLevel`。
+   * `OctomapPointsChangedDetail.groundPlaneLevel`。
    */
   get referenceLevel(): number | null {
     return this.referenceAnchored ? this.referenceAnchor.y : null;
@@ -431,7 +431,7 @@ export class Octomap3dPcdGlobal {
    * （`bbox` 为 null）时把锚点作废，下一份云重新定。
    */
   anchorReference(
-    bbox: OctoMapBoundingBox | null,
+    bbox: OctomapBoundingBox | null,
     groundLevel: number,
     refit: boolean,
   ): void {
@@ -455,7 +455,7 @@ export class Octomap3dPcdGlobal {
    * 尺寸（`gridSize`）是用户设的定值，云挪出网格之外是正常的——它本来就只是把
    * 尺子，不负责罩住点云（那是地面平面的活儿，见 {@link updateGroundPlane}）。
    */
-  alignGrid(bbox: OctoMapBoundingBox | null): void {
+  alignGrid(bbox: OctomapBoundingBox | null): void {
     if (!bbox) {
       return;
     }
@@ -464,7 +464,7 @@ export class Octomap3dPcdGlobal {
     }
   }
 
-  fitCamera(bbox: OctoMapBoundingBox | null): void {
+  fitCamera(bbox: OctomapBoundingBox | null): void {
     if (!bbox) {
       return;
     }
@@ -485,7 +485,7 @@ export class Octomap3dPcdGlobal {
    * 包围盒中心 + 当前地板高度摆一次，与改动前的行为一致。
    */
   private frameAnchorOf(
-    bbox: OctoMapBoundingBox,
+    bbox: OctomapBoundingBox,
     groundLevel: number,
   ): THREE.Vector3 {
     if (!this.referenceAnchored) {
@@ -502,8 +502,8 @@ export class Octomap3dPcdGlobal {
    * 设终点、加点这四条流程的可点击矩形。平面没覆盖到的地方，点击会被静默丢掉。
    */
   updateGroundPlane(
-    bbox: OctoMapBoundingBox | null,
-    extent: OctoMapGroundExtent,
+    bbox: OctomapBoundingBox | null,
+    extent: OctomapGroundExtent,
     groundLevel: number,
   ): void {
     if (!bbox) {
@@ -544,7 +544,7 @@ export class Octomap3dPcdGlobal {
     this.groundPlane.visible = true;
   }
 
-  updateLights(bbox: OctoMapBoundingBox | null): void {
+  updateLights(bbox: OctomapBoundingBox | null): void {
     if (!bbox) {
       return;
     }

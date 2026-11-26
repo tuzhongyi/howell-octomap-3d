@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import * as THREE from 'three';
-import { OctoMapWalkProgress, OctoMapWalkState } from '../octomap-3d-pcd.model';
+import { OctomapWalkProgress, OctomapWalkState } from '../octomap-3d-pcd.model';
 import { Octomap3dPcdGlobal } from './octomap-3d-pcd-global.controller';
 
 /** 行进速度，世界单位/秒。 */
@@ -69,7 +69,7 @@ export class Octomap3dPcdDog {
   private walking = false;
   private paused = false;
   /** 每当小狗在路径上的位置变化（或被拖动）时上报。 */
-  readonly walkStateChanged = new Subject<OctoMapWalkProgress>();
+  readonly walkStateChanged = new Subject<OctomapWalkProgress>();
   private readonly raycaster = new THREE.Raycaster();
   private readonly pointer = new THREE.Vector2();
   private readonly onFrame = (delta: number): void => this.update(delta);
@@ -765,7 +765,7 @@ export class Octomap3dPcdDog {
 
   /** 把当前进度 + 状态推送给订阅者。 */
   private emitWalkState(): void {
-    const state: OctoMapWalkState =
+    const state: OctomapWalkState =
       this.path.length < 2
         ? 'idle'
         : this.paused

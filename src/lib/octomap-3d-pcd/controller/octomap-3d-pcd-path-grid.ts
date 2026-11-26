@@ -1,4 +1,4 @@
-import { OctoMapBoundingBox } from '../octomap-3d-pcd.model';
+import { OctomapBoundingBox } from '../octomap-3d-pcd.model';
 
 /**
  * 规划网格的**格数**上限（`nx * nz`，含外圈边距的全部格子）。
@@ -80,7 +80,7 @@ export const CELL_SAFETY = NAV_CELL_SIZE / 2;
  * 按比例搬到另一个上——那圈大是为了让小狗能绕行，这圈大是为了点击不被丢掉。
  */
 export function navGridSize(
-  bbox: OctoMapBoundingBox,
+  bbox: OctomapBoundingBox,
   start: [number, number, number] | null,
   goal: [number, number, number] | null,
   dogRadius: number,

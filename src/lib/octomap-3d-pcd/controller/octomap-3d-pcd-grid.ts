@@ -1,5 +1,5 @@
 /** 网格内的体素坐标。 */
-export interface OctoMapGridCoord {
+export interface OctomapGridCoord {
   ix: number;
   iy: number;
   iz: number;
@@ -34,7 +34,7 @@ export class Octomap3dPcdVoxelGrid {
     return `${ix},${iy},${iz}`;
   }
 
-  static parse(key: string): OctoMapGridCoord {
+  static parse(key: string): OctomapGridCoord {
     const [ix, iy, iz] = key.split(',').map(Number);
     return { ix, iy, iz };
   }
@@ -107,7 +107,7 @@ export class Octomap3dPcdVoxelGrid {
     return this.cells.size;
   }
 
-  worldToVoxel(x: number, y: number, z: number): OctoMapGridCoord {
+  worldToVoxel(x: number, y: number, z: number): OctomapGridCoord {
     return {
       ix: Math.floor((x - this.min[0]) / this.voxelSize),
       iy: Math.floor((y - this.min[1]) / this.voxelSize),

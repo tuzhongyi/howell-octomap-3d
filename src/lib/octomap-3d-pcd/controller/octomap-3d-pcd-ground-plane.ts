@@ -1,4 +1,4 @@
-import { OctoMapBoundingBox } from '../octomap-3d-pcd.model';
+import { OctomapBoundingBox } from '../octomap-3d-pcd.model';
 
 /**
  * 视口那块灰色地面平面的外圈延展量，**各轴独立**。
@@ -6,7 +6,7 @@ import { OctoMapBoundingBox } from '../octomap-3d-pcd.model';
  * `outside` 为 false（设置里的「仅限立方体内」）时 `x` / `z` 一律按 0 处理——
  * 两个数仍然留在结构体里，免得调用方为了这两种情形拼两个形状。
  */
-export interface OctoMapGroundExtent {
+export interface OctomapGroundExtent {
   /** 是否往包围盒外延展。 */
   outside: boolean;
   /** 沿世界 X 轴的延展长度（世界单位，单边）。 */
@@ -38,12 +38,12 @@ export interface OctoMapGroundExtent {
  * （最大边约 15.25 m）两者正好都在 0.9 附近，见下面 `1e-3` 与默认值的注释。
  */
 export function groundPlaneRect(
-  bbox: OctoMapBoundingBox,
-  extent: OctoMapGroundExtent,
+  bbox: OctomapBoundingBox,
+  extent: OctomapGroundExtent,
   anchor?: { x: number; z: number },
 ): { width: number; depth: number } {
   // 兜底不是防御性编程：`config.service.ts` 把 `octomap.config.json` 裸断言成
-  // `OctoMapMapSettings`，手写资产里的 `"groundExtendX": "0.9"`（字符串）或 `null`
+  // `OctomapMapSettings`，手写资产里的 `"groundExtendX": "0.9"`（字符串）或 `null`
   // 会一路进到 `scale.set()` 里变成 NaN，而 NaN 的比例会让**整个平面消失**——
   // 连带着放狗/刷障碍的射线靶面一起没。负数同理（`Math.max` 之前先夹住）。
   const side = (v: number) => (Number.isFinite(v) ? Math.max(v, 0) : 0);

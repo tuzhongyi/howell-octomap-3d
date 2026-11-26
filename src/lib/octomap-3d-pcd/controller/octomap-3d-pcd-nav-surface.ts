@@ -1,4 +1,4 @@
-import { DEFAULT_OCTO_MAP_SETTINGS, OctoMapBoundingBox } from '../octomap-3d-pcd.model';
+import { DEFAULT_OCTOMAP_SETTINGS, OctomapBoundingBox } from '../octomap-3d-pcd.model';
 
 /**
  * 同一个 run 内相邻两点的最大竖直间距（世界单位）。
@@ -16,7 +16,7 @@ import { DEFAULT_OCTO_MAP_SETTINGS, OctoMapBoundingBox } from '../octomap-3d-pcd
 const RUN_GAP = 0.03;
 
 /**
- * 跨越候选的**格距**上限，12 格 = 0.6 m（{@link OctoMapNavConfig.crossWidth}）。
+ * 跨越候选的**格距**上限，12 格 = 0.6 m（{@link OctomapNavConfig.crossWidth}）。
  *
  * 设置面板的滑杆最大只到 0.3 m（6 格），这里是给手改配置文件留的兜底：格距每加一格，
  * 每个节点要枚举的候选邻居数按平方涨（`π·d²`），而 A* 每扩展一个节点都要走一遍，
@@ -50,7 +50,7 @@ const FILL_RADIUS_MIN = 2;
 const FILL_RADIUS_MAX = 12;
 
 /**
- * {@link OctoMapMapSettings.fillBaseCells} 的上限（格）：认领高度最多拿多大的邻域当基准。
+ * {@link OctomapMapSettings.fillBaseCells} 的上限（格）：认领高度最多拿多大的邻域当基准。
  *
  * 它是个**性能护栏**，和 `MAX_CROSS_CELLS` / `FILL_RADIUS_MAX` 同一类：`minLo` 的传播
  * 是「窗口」趟 8 邻取最小，而窗口取 `max(半径, 设置值)`（见 {@link fillEmptyColumns}），
@@ -106,7 +106,7 @@ const FILL_MAX_RISE = 0.1;
  * 的来历见 `octomap-3d-pcd-path-grid.ts` 里 `CELL_SAFETY` 的注释，那是「格心判据推真实墙
  * 面距离」的账，属于规划器的口径，不该在这里重算一遍。
  */
-export interface OctoMapNavConfig {
+export interface OctomapNavConfig {
   /** 碰撞半径 + 半格安全余量（世界单位）。 */
   clearanceRadius: number;
   /** 小狗的通行高度。 */
@@ -128,7 +128,7 @@ export interface OctoMapNavConfig {
   /** 假想地面是否延伸到点云之外（设置里那一项）。 */
   groundExtendsOutside: boolean;
   /** 点云包围盒；`groundExtendsOutside` 为 false 时用来封住扫描之外的地面。 */
-  bounds: OctoMapBoundingBox | null;
+  bounds: OctomapBoundingBox | null;
   /**
    * 被刷成禁行的**列**（长 `nx*nz`），整列不可站。null = 一个都没有。
    *
@@ -343,7 +343,7 @@ export class Octomap3dPcdNavSurface {
   /** 1 = 这列一个点都没有，是 {@link build} 补出来的虚拟地面。 */
   readonly virtualRun: Uint8Array;
 
-  private config: OctoMapNavConfig | null = null;
+  private config: OctomapNavConfig | null = null;
   /** 可站判定的记忆：0 未知 / 1 可站 / 2 不可站。按 run id 索引。 */
   private standableMemo: Uint8Array;
   /** 净空判定要扫的邻域偏移（格），在 {@link configure} 里按半径算一次。 */
@@ -421,7 +421,7 @@ export class Octomap3dPcdNavSurface {
    * 仍然是虚拟 run（仍然跳过全部净空判定），节点数、run id、`runOffset` 全都不变。
    * 这一条是整套改法安全的前提，不能顺手「改进」成真实的 run。
    *
-   * `fillBaseCells` 是设置里的「填充基准范围」（见 {@link OctoMapMapSettings.fillBaseCells}），
+   * `fillBaseCells` 是设置里的「填充基准范围」（见 {@link OctomapMapSettings.fillBaseCells}），
    * 只在 `fillFromNeighbors` 打开时有意义：它放大那道高度守卫的**基准邻域**，于是更
    * 多的空列会因为「认领到的面比这一带的本地地面高太多」而被拒、退回 `groundLevel`。
    * 它是**建图参数**，跟 `step` / `crossWidth` 那些不同——后者要到 `configure` 才拿得到，
@@ -437,7 +437,7 @@ export class Octomap3dPcdNavSurface {
     cell: number,
     groundLevel: number,
     fillFromNeighbors = false,
-    fillBaseCells: number = DEFAULT_OCTO_MAP_SETTINGS.fillBaseCells,
+    fillBaseCells: number = DEFAULT_OCTOMAP_SETTINGS.fillBaseCells,
   ): Octomap3dPcdNavSurface {
     const cellCount = nx * nz;
     const counts = new Uint32Array(cellCount);
@@ -557,7 +557,7 @@ export class Octomap3dPcdNavSurface {
    * 单独一个方法而不是塞进 {@link build}：run 的结构只跟点云走，而参数每次拖滑块
    * 都在变。分开之后调用方能缓存 build 的结果，只重跑这一步。
    */
-  configure(config: OctoMapNavConfig): void {
+  configure(config: OctomapNavConfig): void {
     this.config = config;
     // 判定结果全部作废。长度够就复用（拖滑块时不必重新分配），不够才新建。
     if (this.standableMemo.length < this.nodeCount) {
@@ -740,7 +740,7 @@ export class Octomap3dPcdNavSurface {
    * 高度以内时，家具下面那层能站的地面就再也进不去了（改动前的单层模型是能进的）；
    * 而「最高的那个恰好不可站」还会把整条边判死，明明还有更低的合法落点。
    *
-   * 八邻之外还有一圈**跨越**的邻居（{@link OctoMapNavConfig.crossWidth}）：格距在
+   * 八邻之外还有一圈**跨越**的邻居（{@link OctomapNavConfig.crossWidth}）：格距在
    * 「一个跨越宽度 + 一格」以内的列都可以直接连边，条件是路上那些中间格过得去
    * （{@link crossClear}）。地上的坑因此能跨过去，而不必踩到坑底。跨界照样受跨越
    * 高度限制——一步跨过去，脚抬起来的那一下和爬台阶是同一条规矩。
@@ -1190,7 +1190,7 @@ export class Octomap3dPcdNavSurface {
     return true;
   }
 
-  private get cfg(): OctoMapNavConfig {
+  private get cfg(): OctomapNavConfig {
     const cfg = this.config;
     if (!cfg) {
       throw new Error('Octomap3dPcdNavSurface 还没 configure 就被查询了');

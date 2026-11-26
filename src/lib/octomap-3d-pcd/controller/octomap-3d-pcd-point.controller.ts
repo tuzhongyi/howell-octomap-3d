@@ -2,15 +2,15 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import * as THREE from 'three';
 import {
-  OctoMapBoundingBox,
-  OctoMapCloudPreview,
-  OctoMapHoverInfo,
-  OctoMapPaintedVoxels,
-  OctoMapPointClickedDetail,
-  OctoMapPointCloud,
-  OctoMapPointsChangedDetail,
-  OctoMapProjectionSource,
-  OctoMapRenderMode,
+  OctomapBoundingBox,
+  OctomapCloudPreview,
+  OctomapHoverInfo,
+  OctomapPaintedVoxels,
+  OctomapPointClickedDetail,
+  OctomapPointCloud,
+  OctomapPointsChangedDetail,
+  OctomapProjectionSource,
+  OctomapRenderMode,
 } from '../octomap-3d-pcd.model';
 import { cloudFloorY } from '../utils/cloud-floor.util';
 import { MAX_VOXEL_COUNT } from '../utils/voxel-sample.util';
@@ -27,8 +27,8 @@ const AUTO_VOXEL_DIVISIONS = 64;
 const MAX_VOXEL_FIT_STEPS = 8;
 
 /** 每次（重新）构建时传入的点云专用渲染参数。 */
-export interface OctoMapRenderOptions {
-  renderMode: OctoMapRenderMode;
+export interface OctomapRenderOptions {
+  renderMode: OctomapRenderMode;
   voxelSize: number | null;
   pointSize: number | null;
   pointColor: string;
@@ -43,13 +43,13 @@ export interface OctoMapRenderOptions {
 }
 
 /** 体素拾取结果：单元键及其世界坐标中心。 */
-export interface OctoMapVoxelPick {
+export interface OctomapVoxelPick {
   key: string;
   center: [number, number, number];
 }
 
 /** 体素聚类中的一个格子：下标、累计颜色，以及落进这个格的点数。 */
-interface OctoMapVoxelCell {
+interface OctomapVoxelCell {
   ix: number;
   iy: number;
   iz: number;
@@ -66,7 +66,7 @@ interface OctoMapVoxelCell {
  * 实例矩阵在预览期间已经被改过，不能就地反算。`start`/`count` 是它是按哪段点算出来
  * 的——换一段点就要重算（见 {@link Octomap3dPcdGrille.applyPreview}）。
  */
-interface OctoMapPreviewInstances {
+interface OctomapPreviewInstances {
   ids: Int32Array;
   centers: Float32Array;
   start: number;
@@ -79,13 +79,13 @@ interface OctoMapPreviewInstances {
  */
 @Injectable()
 export class Octomap3dPcdGrille {
-  readonly pointsChanged = new Subject<OctoMapPointsChangedDetail>();
-  readonly pointClicked = new Subject<OctoMapPointClickedDetail>();
-  readonly paintedChanged = new Subject<OctoMapPaintedVoxels>();
+  readonly pointsChanged = new Subject<OctomapPointsChangedDetail>();
+  readonly pointClicked = new Subject<OctomapPointClickedDetail>();
+  readonly paintedChanged = new Subject<OctomapPaintedVoxels>();
   readonly error = new Subject<Error>();
 
   currentPointCount = 0;
-  boundingBox: OctoMapBoundingBox | null = null;
+  boundingBox: OctomapBoundingBox | null = null;
   /**
    * 扫描出来的地板高度（世界 Y）。地面平面、参考网格、以及寻路的攀爬/墙体阈值
    * 都从它起量——`y = 0` 只是世界原点，不是「地面」。
@@ -147,7 +147,7 @@ export class Octomap3dPcdGrille {
    */
   private sourcePositions: Float32Array | null = null;
   /** 正在预览的实例，见 {@link applyPreview}。 */
-  private previewInstances: OctoMapPreviewInstances | null = null;
+  private previewInstances: OctomapPreviewInstances | null = null;
   /** 在待添加/移动的放置位置显示的半透明立方体。 */
   private previewMesh: THREE.Mesh | null = null;
   /** 当前被编辑器悬停/手持高亮着色的体素。 */
@@ -158,7 +158,7 @@ export class Octomap3dPcdGrille {
 
   constructor(private readonly global: Octomap3dPcdGlobal) {}
 
-  rebuild(points: OctoMapPointCloud | null, options: OctoMapRenderOptions, fit: boolean): void {
+  rebuild(points: OctomapPointCloud | null, options: OctomapRenderOptions, fit: boolean): void {
     this.dispose();
     // 这一轮会重新决定体素档位，只有体素分支会把它们写回来。
     this.renderedVoxelSize = null;
@@ -259,9 +259,9 @@ export class Octomap3dPcdGrille {
    * 整份重建，这一步是给「没走到重建」的取消路径兜底。
    */
   applyPreview(
-    preview: OctoMapCloudPreview | null,
-    options: OctoMapRenderOptions,
-    fallback: OctoMapPointCloud | null,
+    preview: OctomapCloudPreview | null,
+    options: OctomapRenderOptions,
+    fallback: OctomapPointCloud | null,
   ): void {
     if (options.renderMode !== 'voxel') {
       this.rebuild(preview?.points ?? fallback, options, false);
@@ -287,7 +287,7 @@ export class Octomap3dPcdGrille {
    * 会有少数格同时属于两边（实测 0.5%），这里把它们算给选中那份——拖动中会跟着走，
    * 松手重建就恢复原样，看不出来。
    */
-  private collectPreviewInstances(start: number, count: number): OctoMapPreviewInstances {
+  private collectPreviewInstances(start: number, count: number): OctomapPreviewInstances {
     const grid = this.grid!;
     const positions = this.sourcePositions!;
     const total = Math.floor(positions.length / 3);
@@ -369,7 +369,7 @@ export class Octomap3dPcdGrille {
     mesh.instanceMatrix.needsUpdate = true;
   }
 
-  applyMaterial(options: OctoMapRenderOptions): void {
+  applyMaterial(options: OctomapRenderOptions): void {
     if (!this.pointsObject) {
       return;
     }
@@ -381,7 +381,7 @@ export class Octomap3dPcdGrille {
   }
 
   /** 不重建几何体即可为所有体素重新着色（保留障碍）。 */
-  refreshColors(options: OctoMapRenderOptions): void {
+  refreshColors(options: OctomapRenderOptions): void {
     if (!this.grid || !this.voxelObject) {
       return;
     }
@@ -404,7 +404,7 @@ export class Octomap3dPcdGrille {
   /**
    * 把(x, y, z) 周围 `radius` 范围内的所有占用体素标记为禁行障碍。
    *
-   * 返回两个数，供调用方判「这一笔有没有刷到东西」（见 `OctoMapBrushMissDetail`）：
+   * 返回两个数，供调用方判「这一笔有没有刷到东西」（见 `OctomapBrushMissDetail`）：
    *
    * - `marked`：本次**新**标记的体素数；
    * - `occupied`：范围内**已占用**的体素数（`grid.has`），**与是否已被禁无关**。
@@ -422,7 +422,7 @@ export class Octomap3dPcdGrille {
     y: number,
     z: number,
     radius: number,
-    options: OctoMapRenderOptions,
+    options: OctomapRenderOptions,
   ): { marked: number; occupied: number } {
     if (!this.grid || !this.voxelObject) {
       return { marked: 0, occupied: 0 };
@@ -475,7 +475,7 @@ export class Octomap3dPcdGrille {
     y: number,
     z: number,
     radius: number,
-    options: OctoMapRenderOptions,
+    options: OctomapRenderOptions,
   ): { marked: number; occupied: number } {
     if (!this.grid || !this.voxelObject) {
       return { marked: 0, occupied: 0 };
@@ -516,7 +516,7 @@ export class Octomap3dPcdGrille {
   }
 
   /** 移除所有已刷障碍并恢复基准颜色。 */
-  clearObstacles(options: OctoMapRenderOptions): void {
+  clearObstacles(options: OctomapRenderOptions): void {
     if (!this.grid) {
       return;
     }
@@ -526,7 +526,7 @@ export class Octomap3dPcdGrille {
   }
 
   /** 一次性把所有占用体素标记为禁行障碍。 */
-  markAllForbidden(options: OctoMapRenderOptions): void {
+  markAllForbidden(options: OctomapRenderOptions): void {
     if (!this.grid || !this.voxelObject) {
       return;
     }
@@ -538,7 +538,7 @@ export class Octomap3dPcdGrille {
   }
 
   /** 把持久化的已刷集合（仅网格匹配时）重新应用到当前网格。 */
-  restorePainted(painted: OctoMapPaintedVoxels | null, options: OctoMapRenderOptions): void {
+  restorePainted(painted: OctomapPaintedVoxels | null, options: OctomapRenderOptions): void {
     if (!this.grid || !this.voxelObject) {
       return;
     }
@@ -561,7 +561,7 @@ export class Octomap3dPcdGrille {
   }
 
   /** 在世界坐标位置添加一个体素（该单元已占用时不执行任何操作）。 */
-  addVoxel(world: [number, number, number], options: OctoMapRenderOptions): void {
+  addVoxel(world: [number, number, number], options: OctomapRenderOptions): void {
     if (!this.grid) {
       return;
     }
@@ -579,7 +579,7 @@ export class Octomap3dPcdGrille {
   }
 
   /** 按网格键移除一个体素（及其来源点）。 */
-  removeVoxel(key: string, options: OctoMapRenderOptions): void {
+  removeVoxel(key: string, options: OctomapRenderOptions): void {
     if (!this.grid || !this.grid.remove(key)) {
       return;
     }
@@ -589,7 +589,7 @@ export class Octomap3dPcdGrille {
   }
 
   /** 把体素从其键移动到新的世界坐标位置。 */
-  moveVoxel(key: string, world: [number, number, number], options: OctoMapRenderOptions): void {
+  moveVoxel(key: string, world: [number, number, number], options: OctomapRenderOptions): void {
     if (!this.grid) {
       return;
     }
@@ -617,11 +617,11 @@ export class Octomap3dPcdGrille {
    * 同步（添加会追加一个点，移除会丢弃该单元内的点，移动则两者
    * 都做），因此导出时绝不会把点云重采样为每个体素一个点。
    */
-  toPointCloud(): OctoMapPointCloud | null {
+  toPointCloud(): OctomapPointCloud | null {
     if (!this.positions || this.positions.length < 3) {
       return null;
     }
-    const cloud: OctoMapPointCloud = {
+    const cloud: OctomapPointCloud = {
       positions: this.positions,
       pointCount: this.positions.length / 3,
     };
@@ -635,7 +635,7 @@ export class Octomap3dPcdGrille {
    * 把点云重采样为每个占用体素中心一个点，即把每个点吸附到
    * 规则格网上。仅当点云本身带颜色时才沿用颜色。
    */
-  toRegularCloud(): OctoMapPointCloud | null {
+  toRegularCloud(): OctomapPointCloud | null {
     if (!this.grid || this.grid.size === 0) {
       return null;
     }
@@ -657,7 +657,7 @@ export class Octomap3dPcdGrille {
       i++;
     }
 
-    const cloud: OctoMapPointCloud = { positions, pointCount: count };
+    const cloud: OctomapPointCloud = { positions, pointCount: count };
     if (colors) {
       cloud.colors = colors;
     }
@@ -684,7 +684,7 @@ export class Octomap3dPcdGrille {
    * 注意 `boundingBox` 只在 `rebuild()` 里赋值，体素编辑不会更新它。两个投影函数都
    * 会把包围盒外的点丢掉，所以「投影反映增删云点」只在原包围盒**之内**成立。
    */
-  projectionSource(): OctoMapProjectionSource | null {
+  projectionSource(): OctomapProjectionSource | null {
     const bbox = this.boundingBox;
     const positions = this.positions;
     if (!bbox || !positions || positions.length < 3) {
@@ -756,7 +756,7 @@ export class Octomap3dPcdGrille {
   /** 用高亮颜色为一个体素着色（删除/移动悬停或移动手持），或清除它。 */
   setVoxelHighlight(
     key: string | null,
-    options: OctoMapRenderOptions,
+    options: OctomapRenderOptions,
     color = '#fb923c',
   ): void {
     if (!this.grid || !this.voxelObject) {
@@ -782,13 +782,13 @@ export class Octomap3dPcdGrille {
   }
 
   /** 隐藏两个编辑器反馈元素（放置立方体 + 体素着色）。 */
-  clearEditorFeedback(options: OctoMapRenderOptions): void {
+  clearEditorFeedback(options: OctomapRenderOptions): void {
     this.setPreviewPosition(null);
     this.setVoxelHighlight(null, options);
   }
 
   /** 对点击做射线拾取并发出拾取到的点/体素（无拖拽阈值）。 */
-  pick(event: MouseEvent, renderMode: OctoMapRenderMode, maxPickingPoints: number): void {
+  pick(event: MouseEvent, renderMode: OctomapRenderMode, maxPickingPoints: number): void {
     const target: THREE.Object3D | null =
       renderMode === 'voxel' ? this.voxelObject : this.pointsObject;
     if (!target) {
@@ -821,7 +821,7 @@ export class Octomap3dPcdGrille {
    * 点云模式下取点自己的坐标，而不是射线上的命中点——`Points` 的拾取阈值有 5 cm
    * 起步（见 {@link buildPoints}），命中点会跟真实点差出一段，报出来的数就不准了。
    */
-  probe(event: MouseEvent | PointerEvent, maxPickingPoints: number): OctoMapHoverInfo | null {
+  probe(event: MouseEvent | PointerEvent, maxPickingPoints: number): OctomapHoverInfo | null {
     const target: THREE.Object3D | null = this.voxelObject ?? this.pointsObject;
     if (!target) {
       return null;
@@ -865,7 +865,7 @@ export class Octomap3dPcdGrille {
   }
 
   /** 射线拾取体素，返回其键 + 中心（未命中任何东西时为 null）。 */
-  pickVoxel(event: MouseEvent | PointerEvent): OctoMapVoxelPick | null {
+  pickVoxel(event: MouseEvent | PointerEvent): OctomapVoxelPick | null {
     if (!this.voxelObject || !this.grid) {
       return null;
     }
@@ -1044,10 +1044,10 @@ export class Octomap3dPcdGrille {
 
   /** 返回移除了[minHeight, maxHeight] 范围之外的点后的点云。 */
   private filterCloud(
-    cloud: OctoMapPointCloud,
+    cloud: OctomapPointCloud,
     maxHeight: number | null,
     minHeight: number | null,
-  ): OctoMapPointCloud {
+  ): OctomapPointCloud {
     if (maxHeight === null && minHeight === null) {
       return cloud;
     }
@@ -1082,7 +1082,7 @@ export class Octomap3dPcdGrille {
     };
   }
 
-  private buildPoints(cloud: OctoMapPointCloud, options: OctoMapRenderOptions): void {
+  private buildPoints(cloud: OctomapPointCloud, options: OctomapRenderOptions): void {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(cloud.positions, 3));
 
@@ -1108,7 +1108,7 @@ export class Octomap3dPcdGrille {
     this.raycaster.params.Points.threshold = Math.max(pointSize * 4, 0.05);
   }
 
-  private buildVoxels(cloud: OctoMapPointCloud, options: OctoMapRenderOptions): void {
+  private buildVoxels(cloud: OctomapPointCloud, options: OctomapRenderOptions): void {
     const bb = this.boundingBox!;
     const min: [number, number, number] = [bb.min[0], bb.min[1], bb.min[2]];
 
@@ -1223,8 +1223,8 @@ export class Octomap3dPcdGrille {
     colors: Float32Array | undefined,
     min: [number, number, number],
     voxelSize: number,
-  ): Map<string, OctoMapVoxelCell> | null {
-    const cells = new Map<string, OctoMapVoxelCell>();
+  ): Map<string, OctomapVoxelCell> | null {
+    const cells = new Map<string, OctomapVoxelCell>();
     for (let i = 0; i < positions.length; i += 3) {
       const ix = Math.floor((positions[i] - min[0]) / voxelSize);
       const iy = Math.floor((positions[i + 1] - min[1]) / voxelSize);
@@ -1259,7 +1259,7 @@ export class Octomap3dPcdGrille {
     return sameGrid ? new Set(previous.forbidden) : new Set<string>();
   }
 
-  private isShowing(options: OctoMapRenderOptions): boolean {
+  private isShowing(options: OctomapRenderOptions): boolean {
     return options.showColoring;
   }
 
@@ -1337,7 +1337,7 @@ export class Octomap3dPcdGrille {
   }
 
   /** 由当前网格重建 InstancedMesh（保留基准/禁行颜色）。 */
-  private rebuildVoxelMesh(options: OctoMapRenderOptions): void {
+  private rebuildVoxelMesh(options: OctomapRenderOptions): void {
     if (!this.grid) {
       return;
     }
@@ -1398,7 +1398,7 @@ export class Octomap3dPcdGrille {
   }
 
   /** 把体素实例恢复为其正常颜色（禁行色或基准色）。 */
-  private paintNormal(instanceId: number, key: string, options: OctoMapRenderOptions): void {
+  private paintNormal(instanceId: number, key: string, options: OctomapRenderOptions): void {
     const color = new THREE.Color();
     if (this.isShowing(options) && this.grid?.forbidden.has(key)) {
       color.set(options.forbiddenColor);
@@ -1448,7 +1448,7 @@ export class Octomap3dPcdGrille {
     return 0.1;
   }
 
-  private toBoundingBox(box: THREE.Box3): OctoMapBoundingBox {
+  private toBoundingBox(box: THREE.Box3): OctomapBoundingBox {
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     const radius = box.getBoundingSphere(new THREE.Sphere()).radius;

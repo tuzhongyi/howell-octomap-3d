@@ -1,4 +1,4 @@
-import { OctoMapPathAlgorithm } from '../octomap-3d-pcd.model';
+import { OctomapPathAlgorithm } from '../octomap-3d-pcd.model';
 import { Octomap3dPcdNavSurface } from './octomap-3d-pcd-nav-surface';
 import { Octomap3dPcdPathPlanner } from './octomap-3d-pcd-path-planner';
 
@@ -11,11 +11,11 @@ import { Octomap3dPcdPathPlanner } from './octomap-3d-pcd-path-planner';
  * 能工作，小狗可以绕到建筑外面去），以及平面上的代价处处相同（因此不会为了抄近路
  * 而跳着走）。
  *
- * 它的代价则记在 {@link OctoMapPathAlgorithm} 上：那些虚拟地面 run 的高度是个**常数**，
+ * 它的代价则记在 {@link OctomapPathAlgorithm} 上：那些虚拟地面 run 的高度是个**常数**，
  * 跟它旁边有没有地板无关。
  */
 export class Octomap3dPcdPathSurfaceGraph extends Octomap3dPcdPathPlanner {
-  readonly algorithm: OctoMapPathAlgorithm = 'surfaceGraph';
+  readonly algorithm: OctomapPathAlgorithm = 'surfaceGraph';
 
   /**
    * 末位那个 `fillBaseCells` **收下但不用**：这一档根本不填（`fillFromNeighbors` 关着），

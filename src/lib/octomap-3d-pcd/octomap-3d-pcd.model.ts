@@ -3,7 +3,7 @@
  */
 
 /** 由 {@link Octomap3dPcdComponent} 渲染的三维点云。 */
-export interface OctoMapPointCloud {
+export interface OctomapPointCloud {
   /** 交错的 XYZ 坐标，长度 = pointCount * 3。 */
   positions: Float32Array;
   /** 可选的交错 RGB 颜色（0..1），长度 = pointCount * 3。 */
@@ -15,7 +15,7 @@ export interface OctoMapPointCloud {
 }
 
 /** 当前点云的轴对齐包围盒，单位：世界单位。 */
-export interface OctoMapBoundingBox {
+export interface OctomapBoundingBox {
   min: [number, number, number];
   max: [number, number, number];
   center: [number, number, number];
@@ -24,17 +24,17 @@ export interface OctoMapBoundingBox {
 }
 
 /** (mapReady) 发出的负载。 */
-export interface OctoMapReadyDetail {
+export interface OctomapReadyDetail {
   width: number;
   height: number;
   pointCount: number;
-  boundingBox: OctoMapBoundingBox | null;
+  boundingBox: OctomapBoundingBox | null;
 }
 
 /** (pointsChanged) 发出的负载。 */
-export interface OctoMapPointsChangedDetail {
+export interface OctomapPointsChangedDetail {
   pointCount: number;
-  boundingBox: OctoMapBoundingBox | null;
+  boundingBox: OctomapBoundingBox | null;
   /**
    * 参考物（灰色地面平面 + 参考网格）所在的世界 Y；没有点云时为 null。
    *
@@ -64,7 +64,7 @@ export interface OctoMapPointsChangedDetail {
  * 是**增量**不是位置：宿主自己累加进它的偏移量里。拖动期间云已经在画面上跟着走
  * 了，宿主拿到这个值只负责把数据改对，不必再做一次视觉位移。
  */
-export interface OctoMapCloudTranslation {
+export interface OctomapCloudTranslation {
   x: number;
   y: number;
   z: number;
@@ -74,18 +74,18 @@ export interface OctoMapCloudTranslation {
  * 旋转手柄报出来的**总**旋转：欧拉角，单位度，`'XYZ'` 顺序（与 three.js 的
  * `Euler(..., 'XYZ')` 一致），各分量落在（-180, 180]。
  *
- * 与 {@link OctoMapCloudTranslation} 相反，它是**绝对值**不是增量：手柄转的是一次
+ * 与 {@link OctomapCloudTranslation} 相反，它是**绝对值**不是增量：手柄转的是一次
  * 整体朝向，「当前转了多少」才是宿主需要记下来的东西（增量得做四元数合成，宿主那边
  * 没有这套数学）。拖动过程中的实时值同样按这个口径报，宿主直接显示即可。
  */
-export interface OctoMapCloudRotation {
+export interface OctomapCloudRotation {
   x: number;
   y: number;
   z: number;
 }
 
 /** 手柄的摆放：抓在世界的哪个点、以什么朝向为起点。 */
-export interface OctoMapGizmoPose {
+export interface OctomapGizmoPose {
   /**
    * 手柄抓的世界坐标，也是**旋转的支点**。
    *
@@ -108,7 +108,7 @@ export interface OctoMapGizmoPose {
  * 一个手柄同一时刻只能是一种模式（`TransformControls` 的限制），所以这里是单选而不是
  * 两个开关：两个都想要时由宿主决定谁优先。
  */
-export type OctoMapGizmoMode = 'off' | 'translate' | 'rotate';
+export type OctomapGizmoMode = 'off' | 'translate' | 'rotate';
 
 /**
  * 圈出「当前选中的那一份」的轴对齐包围盒（世界坐标）。
@@ -116,7 +116,7 @@ export type OctoMapGizmoMode = 'off' | 'translate' | 'rotate';
  * 场景里拼了多份点云时才有意义：手柄只作用于其中一份，而关掉手柄之后就没有任何
  * 东西提示选的是哪份了，这圈线负责补上。地图不知道「哪份云」，只画一个盒子。
  */
-export interface OctoMapSelectionBox {
+export interface OctomapSelectionBox {
   min: [number, number, number];
   max: [number, number, number];
 }
@@ -132,7 +132,7 @@ export interface OctoMapSelectionBox {
  * 增量由宿主的 `relativeAdjustmentTransform` 从「拖之前」与「拖之后」两份整体变换
  * 算出来——地图不知道旋转角、偏移量这些概念，只知道「这一批实例刚体挪一下」。
  */
-export interface OctoMapCloudPreview {
+export interface OctomapCloudPreview {
   /** 选中那份在合并点云里的起始点号。 */
   start: number;
   /** 它有多少个点。 */
@@ -143,11 +143,11 @@ export interface OctoMapCloudPreview {
   /**
    * 点云模式的兜底：那边没有实例矩阵可挪，只能重画一份世界。体素模式传 null。
    */
-  points: OctoMapPointCloud | null;
+  points: OctomapPointCloud | null;
 }
 
 /** (pointClicked) 发出的负载。 */
-export interface OctoMapPointClickedDetail {
+export interface OctomapPointClickedDetail {
   /** 射线拾取到的点索引，未命中时为 -1。 */
   index: number;
   /** 射线拾取到的点的世界坐标，未命中时为 null。 */
@@ -160,7 +160,7 @@ export interface OctoMapPointClickedDetail {
  * 点云模式下是那个点自己的坐标；立体格栅模式下是体素中心——格栅画出来的每一个
  * 方块就是一个体素，鼠标指着的其实是整格，报格心才和删除/移动用的是同一个位置。
  */
-export interface OctoMapHoverInfo {
+export interface OctomapHoverInfo {
   /** 世界坐标。 */
   position: [number, number, number];
   /** 相对扫描出的地板高度（见 `Octomap3dPcdGrille.groundLevel`）。 */
@@ -173,14 +173,14 @@ export interface OctoMapHoverInfo {
  * 已刷（禁行）障碍体素的集合，可序列化，因而能持久化并在网格重建后重新应用。
  * `voxelSize` + `min` 标识这些键所属的网格。
  */
-export interface OctoMapPaintedVoxels {
+export interface OctomapPaintedVoxels {
   voxelSize: number;
   min: [number, number, number];
   keys: string[];
 }
 
 /** 点云的绘制方式：原始点或实体体素网格。 */
-export type OctoMapRenderMode = 'points' | 'voxel';
+export type OctomapRenderMode = 'points' | 'voxel';
 
 /**
  * 一次俯视投影的全部输入（`(projectionSource)` 的负载，也是
@@ -191,11 +191,11 @@ export type OctoMapRenderMode = 'points' | 'voxel';
  * （`common/utils/projection.util.ts` 的纯函数）。原先它和那些纯函数住在一起，
  * 于是地图反过来依赖 `common/utils`——把类型放回这里，`octomap-3d-pcd/` 才能整目录搬走。
  */
-export interface OctoMapProjectionSource {
+export interface OctomapProjectionSource {
   /** 交错的 XYZ 坐标。 */
   positions: Float32Array;
   /** 投影网格对齐到它的 min[0] / min[2]，尺寸也由它推出。 */
-  bounds: OctoMapBoundingBox;
+  bounds: OctomapBoundingBox;
   /** 分辨率（世界单位），即一格多宽。 */
   resolution: number;
 }
@@ -211,7 +211,7 @@ export interface OctoMapProjectionSource {
  * - `voxelSize`：**实际**用的体素边长（米），笔刷半径 ÷ 它就是判定的尺度。自动模式
  *   （输入为 null）下这两个数只有网格自己知道，所以由组件从这里报出来。
  */
-export interface OctoMapBrushMissDetail {
+export interface OctomapBrushMissDetail {
   radius: number;
   voxelSize: number;
 }
@@ -225,7 +225,7 @@ export interface OctoMapBrushMissDetail {
  *
  * `'surfaceGraph'`：每一列保留它全部的真实竖直占用段；**一个点都没有的列**补一个
  * 常数高度（`groundLevel`）的虚拟地面 run。跨台阶、上桌面靠这一套，
- * {@link OctoMapMapSettings.groundExtendsOutside} 的「封边」那半边也靠它工作——那一项
+ * {@link OctomapMapSettings.groundExtendsOutside} 的「封边」那半边也靠它工作——那一项
  * 管的是**开关**，与视觉地面的大小（`groundExtendX` / `groundExtendZ`）是两件事，
  * 详见它的字段说明。
  *
@@ -243,7 +243,7 @@ export interface OctoMapBrushMissDetail {
  * （真图上是空列的 13.7%，R = 2），所以它补的是扫描的缺口，**不是**把整张地板重建出
  * 来。远离任何点的地方仍旧退回常数地面，`groundExtendsOutside` 的语义因此保留。
  */
-export type OctoMapPathAlgorithm = 'surfaceGraph' | 'cloudFit';
+export type OctomapPathAlgorithm = 'surfaceGraph' | 'cloudFit';
 
 /**
  * 寻路失败的原因。
@@ -277,11 +277,11 @@ export type OctoMapPathAlgorithm = 'surfaceGraph' | 'cloudFit';
  * 处置是**挪终点或者先搭出能站的面**，拖「跨越高度」滑杆救不回来——半空里没有面
  * 可以迈。
  */
-export type OctoMapPathFailureReason =
+export type OctomapPathFailureReason =
   'unreachable' | 'outOfRange' | 'tooLarge' | 'gap' | 'dogStuck' | 'goalTooHigh';
 
 /** 寻路失败时 `(pathFailed)` 发出的负载。 */
-export interface OctoMapPathFailedDetail {
+export interface OctomapPathFailedDetail {
   /**
    * `unreachable` = 搜不到；`outOfRange` = 搜到了但末端落在终点范围之外；
    * `tooLarge` = 压根没搜——场景太大，规划网格超过上限（见 `MAX_FREE_CELLS`）；
@@ -295,7 +295,7 @@ export interface OctoMapPathFailedDetail {
    * 参数、要么挪终点，而这个是场景本身超出了能规划的范围，用户既改不动也挪不动，
    * 只能知道「框在哪儿」——所以它对应的提示会指向「显示规划范围」那个开关。
    */
-  reason: OctoMapPathFailureReason;
+  reason: OctomapPathFailureReason;
   /**
    * 路径末端到终点的距离（世界单位）；只有 `outOfRange` 时有值，其余为 null。
    *
@@ -329,18 +329,18 @@ export interface OctoMapPathFailedDetail {
 }
 
 /** 地图上鼠标交互的解读方式。 */
-export type OctoMapInteractionMode =
+export type OctomapInteractionMode =
   'view' | 'brush' | 'erase' | 'placeDog' | 'placeGoal' | 'addPoint' | 'deletePoint' | 'movePoint';
 
 /** 小狗沿计算出的路径行进的各个状态。 */
-export type OctoMapWalkState = 'idle' | 'ready' | 'walking' | 'paused';
+export type OctomapWalkState = 'idle' | 'ready' | 'walking' | 'paused';
 
 /** 小狗在路径上的位置快照，变化时发出。 */
-export interface OctoMapWalkProgress {
+export interface OctomapWalkProgress {
   /** 已行进路径的比例，取值 [0, 1]。 */
   progress: number;
   /** 小狗当前相对路径处于什么状态。 */
-  state: OctoMapWalkState;
+  state: OctomapWalkState;
   /** 朝向是否已被行进锁住；锁住时初始朝向不再生效，直到重新计算路径。 */
   headingLocked: boolean;
 }
@@ -352,7 +352,7 @@ export interface OctoMapWalkProgress {
  * 接着做什么」包成这个函数发下去，子组件算完调它。`EventEmitter` 的 `next()` 是
  * 同步的，因此同步命令走这条往返和直接调用没有区别。
  */
-export type OctoMapReply<T> = (result: T) => void;
+export type OctomapReply<T> = (result: T) => void;
 
 /**
  * 模型加载请求。
@@ -360,11 +360,11 @@ export type OctoMapReply<T> = (result: T) => void;
  * `reply` 可以不给——不给就是「失败静默」，用于启动时按记住的文件名恢复模型那条
  * 路：文件不在就安静地退回内置几何体，不打扰用户。
  */
-export interface OctoMapDogModelRequest {
+export interface OctomapDogModelRequest {
   /** blob/object URL 或静态资源路径。 */
   url: string;
   /** 收 null（成功）或可显示的失败原因。 */
-  reply?: OctoMapReply<string | null>;
+  reply?: OctomapReply<string | null>;
 }
 
 /**
@@ -380,8 +380,8 @@ export interface OctoMapDogModelRequest {
  * `src/app/common/model/demo-settings.model.ts` 的 `DemoTabSettings`）。上轴与整体
  * 变换由页面在加载那一刻读一次（点云转好、挪好才交给地图），说明开关由面板与行进栏读。
  */
-export interface OctoMapMapSettings {
-  renderMode: OctoMapRenderMode;
+export interface OctomapMapSettings {
+  renderMode: OctomapRenderMode;
   /** 体素棱长，单位：世界单位；null = 自动推导。 */
   voxelSize: number | null;
   /** 点大小，单位：世界单位（点云模式）；null = 自动推导。 */
@@ -441,7 +441,7 @@ export interface OctoMapMapSettings {
    *   上去）。所以默认值降到 **0.25 m**：细的东西留得下来；
    * - 但降默认值**治不了根**——任何半径都能吞掉更细的东西，反过来在空处刷也永远是
    *   静默无效（那儿没有点可标）。真正的兜底是「刷不到点就提示」，见
-   *   `OctoMapBrushMissDetail`。
+   *   `OctomapBrushMissDetail`。
    */
   brushRadius: number;
   /**
@@ -574,24 +574,24 @@ export interface OctoMapMapSettings {
   /** 地面平面沿世界 Z 轴向包围盒外延展的宽度（单边，世界单位）。见 {@link groundExtendX}。 */
   groundExtendZ: number;
   /**
-   * 用哪种方式寻路（见 {@link OctoMapPathAlgorithm}）。
+   * 用哪种方式寻路（见 {@link OctomapPathAlgorithm}）。
    *
    * 与这个接口里别的项不同，它**不属于小狗的形状**，所以不进任何一组设置缓存
    * （分组表见 `settings-tab-cache.service.ts`）——换一种走法不改小狗的尺寸，没有
    * 理由让缓存失效。开关也因此留在行进栏，设置面板「路径」页里没有它。
    */
-  pathAlgorithm: OctoMapPathAlgorithm;
+  pathAlgorithm: OctomapPathAlgorithm;
 }
 
 /**
  * `assets/config/octomap.config.json` 里必须出现的键，也就是
- * {@link OctoMapMapSettings} 的全部。
+ * {@link OctomapMapSettings} 的全部。
  *
- * 类型写成 `(keyof OctoMapMapSettings)[]` 是为了抓错别字：写一个不存在的键名直接是
+ * 类型写成 `(keyof OctomapMapSettings)[]` 是为了抓错别字：写一个不存在的键名直接是
  * 编译错。另一头（漏项、以及「文件里真写了这些键没有」）编译期看不见，由
  * `config.service.spec.ts` 拿真实的 JSON 对账。
  */
-export const MAP_CONFIG_KEYS: readonly (keyof OctoMapMapSettings)[] = [
+export const MAP_CONFIG_KEYS: readonly (keyof OctomapMapSettings)[] = [
   'renderMode',
   'voxelSize',
   'pointSize',
@@ -633,7 +633,7 @@ export const MAP_CONFIG_KEYS: readonly (keyof OctoMapMapSettings)[] = [
  * 这里用 `satisfies` 而非类型标注，因此各值保留字面量类型，可读回为具体默认值
  * （例如 `voxelSize` 是 `number`，而不是 `number | null`）。
  */
-export const DEFAULT_OCTO_MAP_SETTINGS = {
+export const DEFAULT_OCTOMAP_SETTINGS = {
   renderMode: 'voxel',
   voxelSize: 0.05,
   pointSize: null,
@@ -670,4 +670,4 @@ export const DEFAULT_OCTO_MAP_SETTINGS = {
   groundExtendX: 0.9,
   groundExtendZ: 0.9,
   pathAlgorithm: 'surfaceGraph',
-} satisfies OctoMapMapSettings;
+} satisfies OctomapMapSettings;
