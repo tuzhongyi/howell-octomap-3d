@@ -40,6 +40,7 @@ import {
   OctomapRenderMode,
   OctomapReply,
   OctomapSelectionBox,
+  Octomap3dPcdViewState,
   OctomapWalkProgress,
 } from './octomap-3d-pcd.model';
 
@@ -155,15 +156,6 @@ export class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestro
    * 只是中心不动。
    */
   @Input() refitReferenceOnPointsChange = true;
-
-  /**
-   * 手柄左上角那段只读读数（宿主格式化好的文本，可以有换行）。null 时不显示。
-   *
-   * 内容是宿主的事：地图不知道「偏移了多少」「转了多少度」这种语义，它只知道云被
-   * 动过（见 {@link cloudTranslating} / {@link cloudTranslated} /
-   * {@link cloudRotating} / {@link cloudRotated}）。
-   */
-  @Input() gizmoReadout: string | null = null;
 
   /** 点云的绘制方式：原始点云或立体格栅。 */
   @Input() renderMode: OctomapRenderMode = 'voxel';
@@ -398,7 +390,7 @@ export class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestro
   /**
    * 拖动平移手柄**过程中**发出：从按下那一刻算起挪了多少（相对量，世界坐标）。
    *
-   * 给 {@link gizmoReadout} 那种「边拖边报数」的显示用；判据、松手后的落账
+   * 给宿主「边拖边报数」的显示用（test 里是 `d3-status`）；判据、松手后的落账
    * 一律走 {@link cloudTranslated}。一次拖动会发很多次（跟着指针走），接的人自己
    * 掂量要不要每帧都画。
    */
@@ -460,12 +452,17 @@ export class Octomap3dPcdComponent implements AfterViewInit, OnChanges, OnDestro
   @Output() readonly error = new EventEmitter<Error>();
 
   /**
-   * 指针下那个云点的读数，显示在视口右下角；没指着东西时为 null。
+   * 指针下那个云点的读数，交给宿主的状态组件显示；没指着东西时为 null。
    *
    * 用信号而不是普通字段：探测发生在 requestAnimationFrame 里，信号能自己把 OnPush
    * 的这一帧标脏，不必再去碰变更检测。
    */
   protected readonly hover = signal<OctomapHoverInfo | null>(null);
+
+  /** 只读状态快照；宿主状态组件用。 */
+  viewState(): Octomap3dPcdViewState {
+    return { hover: this.hover() };
+  }
 
   private readonly controller = inject(Octomap3dPcd);
   private readonly subscriptions: Subscription[] = [];

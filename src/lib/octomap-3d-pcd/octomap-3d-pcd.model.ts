@@ -671,3 +671,13 @@ export const DEFAULT_OCTOMAP_SETTINGS = {
   groundExtendZ: 0.9,
   pathAlgorithm: 'surfaceGraph',
 } satisfies OctomapMapSettings;
+
+/**
+ * 组件对外的只读状态快照。
+ *
+ * 三维组件本身不画读数浮框；宿主的状态组件（test 的 `d3-status`）读这个快照来
+ * 显示悬停点信息，手柄读数则由宿主自己格式化后直接传给状态组件。
+ */
+export interface Octomap3dPcdViewState {
+  hover: OctomapHoverInfo | null;
+}

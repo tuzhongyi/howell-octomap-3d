@@ -24,6 +24,11 @@ import { Octomap3dPcdComponent, OctomapPointCloud } from 'howell-octomap-3d';
 
 组件选择器：`howell-octomap-3d-pcd`。点云通过 `points` 输入传入，状态变化通过 `@Output()` 上报。
 
+组件**只负责画布与三维逻辑，不画悬停/手柄读数**：
+
+- 悬停点信息：`viewState()` 返回 `Octomap3dPcdViewState`（`hover`）
+- 手柄读数：宿主自己格式化后交给自己的状态组件（原来的 `gizmoReadout` 输入已移除）
+
 ## 开发
 
 ```bash
